@@ -20,7 +20,7 @@ Interface:
 
 # Requirements
 
-
+- Python 3.9.13
 
 # Sample Execution & Output
 
