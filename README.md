@@ -16,18 +16,29 @@ Interface:
 - table creation to make file in designated database folder
 
 - For Invalid input output prompt "Error: unknown command, invalid arguments or missing semicolon"
-- <enter> is empty line so should be invalid input
 
 ## Requirements
 
 * Python 3.9.13
----
 
-## Sample Execution & Output
+# Sample Execution, Output, and Usage Examples
 
-**Expected output that matches following testscript provided** 
+**Expected output that matches following testscript provided**
+
 Can also make all of the commands individually on command line and will obtain same expected output. 
 
+To run program by file or script input:
+```
+$ python PA1-Rood.py < PA1_test.sql
+```
+
+To run program and input commands individually simply run the python program:
+
+```
+$ python PA1-Rood.py
+```
+
+Additional example input and output is as follows:
 ```
 --CS457 PA1
 
@@ -84,14 +95,17 @@ SELECT * FROM tbl_1;
 ```
 ---
 
-### How program organizes multiple databases
 
-To organize the databases, I have implemented functionality so that every database made by the user creates a new directory, or folder, under the name specified by the user.  Every database is separated by directory where it is its very own folder.
+## How my program organizes multiple databases:
 
-### How program manages multiple tables
+To organize the databases, I have implemented functionality so that every database made by the user creates a new directory, or folder, under the name specified by the user.  The database creation and delete functions take in the current working directory through use of os built-in functions to get the relative path that you are in when running the program.  This ensures that the data is persistent.   Ultimately, every database is separated by directory where it is its very own folder to keep all organized and separated properly for the user.
 
-To manage multiple tables, the database to use is needed to be specified by the user beforehand because this portrays which database (aka folder) that the table to be added should be placed in.  A table is going to be a new txt file under the given name.  Then, the attribute fields given to the table are then added to the file.
+---
+## How program manages multiple tables:
 
-### How are these functionalities implemented (Explained at a high level)
+To manage multiple tables, the database to use is needed to be specified by the user beforehand because this portrays which database (aka folder or directory) that the table to be added should be placed in.  I have control flow functionality that ensures that an error statement is output if trying to create, delete, modify, or query a table when a database is not specified for use before.   If the user has communicated an relevant database to use, a table is then going to be created as a new txt file under the given table name.  Then, the attribute fields given to the create or modify the table are then added to the file with string IO to format it correctly when writing to the file.  Finally, the drop table functionality uses the os library to remove the file desired from input and the query functionality reads from the desired table file.
 
-All if not most of these functionalities are implemented useing fileIO and the os library.  Through the organizing database creation in folders and tables as files in database folders, fileIO and the os functionality allowed me to efficiently manage the file system and take advantage of these built-in library function to implement all these functions to manage the metadata.
+---
+## How are these functionalities implemented (Explained at a high level):
+
+All if not most of these functionalities are implemented using fileIO and the os library to ensure all relative paths used are correct.  Through organizing database creation in folders and tables as files in database folders, fileIO and the os functionality allowed me to efficiently manage the file system and take advantage of these built-in library function to implement all these functions.  Overall, the string, os, and file IO operations available in python allowed me to properly manage the metadata taken in and organize the databases and tables by establishing databases and files within them respectively.
