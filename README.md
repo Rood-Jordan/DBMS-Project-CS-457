@@ -3,19 +3,17 @@
 This program allows a database user to manage metadata/create database and tables within.
 Metadata meaning the database's high-level info (db's name, creation date/time, etc.)
 
-Data should be persistent (e.g., stored on hard drive)
+Data is persistent (e.g., stored on hard drive) through use of relative path functionality.
 
-Functionalities:
+Functionalities include:
 - Database creation, deletion
 - Table creation, deletion, update, and query
 
 Interface:
-- similar but simpler interface than Sqlite3
+- Similar, but simpler interface than Sqlite3
 
-- Database creation to make folder directory
-- table creation to make file in designated database folder
-
-- For Invalid input output prompt "Error: unknown command, invalid arguments or missing semicolon"
+- Database creation to make folder directory under input database name
+- Table creation to make file in designated database folder under input table
 
 ## Requirements
 
