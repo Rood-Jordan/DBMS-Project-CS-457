@@ -1,7 +1,7 @@
 # Author: Jordan Rood 
 # CS 457 : DATABASE MANAGEMENT SYSTEMS
-# Programming Assignment 1 - Metadata Management System
-# Date: 02-08-2023
+# Programming Assignment 2 - Basic Data Manipulation: built off previous assignments Metadata Management System
+# Date: 03-22-2023
 
 import os, sys
 import shutil
@@ -81,7 +81,7 @@ def createTable(input: list, cwd: str, dbToUse: str):
             attributeStr = attributeStr[:-3]
 
         with open(tablePath, 'w') as fp:
-            fp.write(attributeStr)
+            fp.write(attributeStr + "\n")
             pass
         fp.close()
         print("Table " + input[2] + " created.")
@@ -108,9 +108,12 @@ def selectTable(tableName: str, cwd: str):
         print(Fore.RED + "!Failed " + Style.RESET_ALL + "to query table " + tableName + " because it does not exist.")
     else:
         with open(tablePath, 'r') as fp:
-            contents = fp.readline()
-            print(contents)
+            contents = fp.readlines()
             pass
+
+        for x in contents:
+            print(x.replace('\n', ''))
+
         fp.close()
 
 
@@ -133,11 +136,46 @@ def alterTable(input: list, cwd: str):
 
         if input[3] == 'ADD':
             with open(tablePath, 'a') as fp:
-                fp.write(attributeStr)
+                fp.write(attributeStr + "\n")
                 pass
             fp.close()
 
         print("Table " + input[2] + " modified.")
+
+
+def insertData(data: list, cwd: str):
+
+    tblName = data[2]
+    tblPath = os.path.join(cwd, tblName)
+
+    if not os.path.exists(tblPath):
+        print("Could not insert data because table" + tblName + "does not exist.")
+    else:
+        dataStr = ''
+        for i in range(3, len(data)):
+            dataStr += data[i].replace('values(', '').replace(',', '|').replace(');', '').replace('\t', '')
+
+        with open(tblPath, 'a+') as fp:
+            dataInFile = fp.read()
+
+            if not dataInFile.endswith('\n'):
+                fp.write(f'{dataStr}\n')
+            else:
+                fp.write(f'\n{dataStr}\n')
+
+        fp.close()
+
+        print("1 new record inserted.")
+
+
+def updateData(tblName: str, cwd: str):
+
+    print("Updating data in table")
+
+
+def removeData():
+
+    print("Deleting data")
 
 
 def main(): 
@@ -153,37 +191,63 @@ def main():
             
             if userInput.startswith('--') or userInput == '':
                 pass
-            elif upperInput == 'EXIT' or userInput == '\r' or upperInput == '.EXIT':
+
+            elif upperInput == 'EXIT' or upperInput == '.EXIT':
                 running = False
-            elif userInput[-1] != ';':
+
+            elif userInput[-1] != ';' and not upperInput.startswith('UPDATE'):
                 print("Error: invalid input (and no semi-colon at end of input).")
                 continue
+
             elif upperInput.startswith('CREATE DATABASE') and len(listInput) == 3:
                 createDatabase(listInput[2].replace(';', ''), cwd)
+
             elif upperInput.startswith('DROP DATABASE') and len(listInput) == 3:
                 dropDatabase(listInput[2].replace(';', ''), cwd)
+
             elif upperInput.startswith('USE') and len(listInput) == 2:
                 dbToUse = useDatabase(listInput[1].replace(';', ''), cwd)
+
             elif upperInput.startswith('CREATE TABLE') and len(listInput) >= 5:
                 if dbToUse == '':
                     print(Fore.RED + "!Failed " + Style.RESET_ALL + "to create table " + listInput[2] + " because no database is being used.")
                 else:
                     createTable(listInput, cwd, dbToUse)
+
             elif upperInput.startswith('DROP TABLE') and len(listInput) == 3:
                 if dbToUse == '':
                     print(Fore.RED + "!Failed " + Style.RESET_ALL + "to drop table " + listInput[2] + " because no database is being used.")
                 else:
                     dropTable(listInput[2].replace(';', ''), os.path.join(cwd, dbToUse))
+
             elif upperInput.startswith('SELECT * FROM') and len(listInput) == 4:
                 if dbToUse == '':
-                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to query table " + listInput[3] + " because no database is being used.")
+                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to query table " + listInput[3].replace(';', '') + " because no database is being used.")
                 else:
                     selectTable(listInput[3].replace (';', ''), os.path.join(cwd, dbToUse))
+
             elif upperInput.startswith('ALTER TABLE') and 'ADD' in upperInput and len(listInput) == 6:
                 if dbToUse == '':
                     print(Fore.RED + "!Failed " + Style.RESET_ALL + "to alter table " + listInput[2] + " because no database is being used.")
                 else:
-                    alterTable(listInput, os.path.join(cwd, dbToUse))
+                    alterTable(listInput, os.path.join(cwd, dbToUse.replace(';', '')))
+
+
+            elif upperInput.startswith('INSERT INTO') and 'VALUES' in upperInput and len(listInput) >= 4:
+                if dbToUse == '':
+                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to alter table " + listInput[2] + " because no database is being used.")
+                else:
+                    insertData(listInput, os.path.join(cwd, dbToUse))
+
+            elif upperInput.startswith('UPDATE') and len(listInput) == 2:
+                updateData(listInput[1], cwd)
+
+            elif upperInput.startswith('DELETE FROM'):
+                removeData()
+
+# modify and query - should be easy
+# delete - move the tuples around?
+
             else:
                 print("Error: invalid input.")
                 continue

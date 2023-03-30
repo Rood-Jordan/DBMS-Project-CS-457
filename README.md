@@ -107,3 +107,14 @@ To manage multiple tables, the database to use is needed to be specified by the 
 ## How are these functionalities implemented (Explained at a high level):
 
 All if not most of these functionalities are implemented using fileIO and the os library to ensure all relative paths used are correct.  Through organizing database creation in folders and tables as files in database folders, fileIO and the os functionality allowed me to efficiently manage the file system and take advantage of these built-in library function to implement all these functions.  Overall, the string, os, and file IO operations available in python allowed me to properly manage the metadata taken in and organize the databases and tables by establishing databases and files within them respectively.
+
+
+## How program stores tuples in the table
+
+
+## How required functionalities corresponding to tuple insertion, deletion, modification, and query
+
+
+## Spefics on how to compile and execute program
+
+discuss each function in some detail or depth e.g. create database
