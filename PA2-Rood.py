@@ -7,6 +7,7 @@ import os, sys
 import shutil
 import re
 from colorama import Fore, Style
+import fileinput
 
 def createDatabase(dbName: str, cwd: str):
     # uses fileIO and os to create a new database directory folder
@@ -74,9 +75,9 @@ def createTable(input: list, cwd: str, dbToUse: str):
                 # if type string contains unbalanced amount of parentheses
                 attributeType = attributeType[:-1]
 
-            attributeStr += attributeName.replace('(', '') + ' ' +  attributeType + ' | '
+            attributeStr += attributeName.replace('(', '') + ' ' +  attributeType + '|'
 
-        if attributeStr.endswith(' | '):
+        if attributeStr.endswith('|'):
             # format to make sure | is not at end of string
             attributeStr = attributeStr[:-3]
 
@@ -149,11 +150,11 @@ def insertData(data: list, cwd: str):
     tblPath = os.path.join(cwd, tblName)
 
     if not os.path.exists(tblPath):
-        print("Could not insert data because table" + tblName + "does not exist.")
+        print(Fore.RED + "!Failed " + Style.RESET_ALL + "to insert data because table" + tblName + "does not exist.")
     else:
         dataStr = ''
         for i in range(3, len(data)):
-            dataStr += data[i].replace('values(', '').replace(',', '|').replace(');', '').replace('\t', '')
+            dataStr += data[i].replace('values(', '').replace(',', '|').replace(');', '').replace('\t', '').replace('\'', '')
 
         with open(tblPath, 'a+') as fp:
             dataInFile = fp.read()
@@ -168,14 +169,120 @@ def insertData(data: list, cwd: str):
         print("1 new record inserted.")
 
 
-def updateData(tblName: str, cwd: str):
+def processFileData(data: list, setAttr: str, whereAttr: str, dataToFind: str, dataToSet: str) -> list:
+    # splitLines = []
+    # for line in data:
+    #     splitData = line.replace('\n', '').replace('\t', '').split('|')
+    #     splitLines.append(splitData)
 
-    print("Updating data in table")
+    splitLines = splitFileData(data)
+    
+    indexToReplaceAt, colToSetAt, recordsModified = 0, 0, 0
+    for index, dataType in enumerate(splitLines[0]):
+        if whereAttr in dataType:
+            indexToReplaceAt = index
+        elif setAttr in dataType:
+            colToSetAt = index
+
+    for i in range(1, len(splitLines)):
+        if splitLines[i][indexToReplaceAt] == dataToFind:
+            if setAttr == whereAttr:
+                splitLines[i][indexToReplaceAt] = dataToSet
+            else:
+                splitLines[i][colToSetAt] = dataToSet
+            recordsModified += 1
+
+    if recordsModified == 1:
+        print(recordsModified, " record modified.")
+    else:
+        print(recordsModified, " records modified.")
+
+    print(['|'.join(x) for x in splitLines])
+    return ['|'.join(x) for x in splitLines]
 
 
-def removeData():
+def updateData(tblName: str, modifyInfoLst: list, cwd: str):
+    recordsModified = 0
+    tblPath = os.path.join(cwd, tblName)
 
-    print("Deleting data")
+    if len(modifyInfoLst) == 9 and 'set' in modifyInfoLst and 'where' in modifyInfoLst:
+        attributeToSet = modifyInfoLst[2]
+        attributeToFind = modifyInfoLst[6]
+
+        dataToFind = modifyInfoLst[8].replace(';', '').replace('\'', '')
+        dataToSet = modifyInfoLst[4].replace('\'', '')
+
+        fp = open(tblPath, 'r')
+        fileData = fp.readlines()
+
+        replacedData = processFileData(fileData, attributeToSet, attributeToFind, dataToFind, dataToSet)
+
+        fp.close()
+
+        fp = open(tblPath, 'w')
+        fp.write('\n'.join(replacedData))
+        fp.close()
+
+    else:
+        print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data due to invalid input.")
+
+
+def removeData(tblName: str, whereLst: list, cwd: str):
+    numDeleted, attributeToCheck = 0, ''
+    tblPath = os.path.join(cwd, tblName)
+
+    if len(whereLst) == 5 and 'where' in whereLst:
+        attributeToCheck = whereLst[2]
+    
+    file = open(tblPath, 'r')
+    fileData = file.readlines()
+
+    data = splitFileData(fileData)
+    file.close()    
+
+    operator = whereLst[3]
+    operand = whereLst[4].replace(';', '').replace('\'', '')
+    
+    indexToCheck = 0
+    for i, attributeType in enumerate(data[0]):
+        #print(attributeToCheck, attributeType, i)
+        if attributeToCheck in attributeType:
+            indexToCheck = i
+
+    #print("index to check is ", indexToCheck)
+    for j in range(len(data)-1, 1, -1):
+        if operator == '=':
+            if data[j][indexToCheck] == operand:
+                data.pop(j)
+                numDeleted += 1
+        elif operator == '>':
+            if data[j][indexToCheck] > operand:
+                data.pop(j)
+                numDeleted += 1
+        else:
+            #other operands for extension
+            continue
+        #print(data)
+
+    finalData = ['|'.join(x) for x in data]
+    fp =  open(tblPath, 'w')
+    fp.write('\n'.join(finalData) + '\n')
+    fp.close()
+
+    if numDeleted == 1:
+        print(numDeleted, "record deleted.")
+    else:
+        print(numDeleted, "records deleted.")
+
+
+#helper functions
+def splitFileData(data: list) -> list:
+    splitLines = []
+    for line in data:
+        splitData = line.replace('\n', '').replace('\t', '').split('|')
+        splitLines.append(splitData)
+
+    return splitLines
 
 
 def main(): 
@@ -188,16 +295,18 @@ def main():
 
             upperInput = userInput.upper()
             listInput = userInput.split(" ")
+
+            #print(listInput)
             
-            if userInput.startswith('--') or userInput == '':
+            if userInput.startswith('--') or userInput == '' or userInput == '\r':
                 pass
 
-            elif upperInput == 'EXIT' or upperInput == '.EXIT':
+            elif upperInput == 'EXIT' or upperInput == '.EXIT\r' or upperInput == '.EXIT':
                 running = False
 
-            elif userInput[-1] != ';' and not upperInput.startswith('UPDATE'):
-                print("Error: invalid input (and no semi-colon at end of input).")
-                continue
+            #elif not upperInput.startswith('UPDATE') and not upperInput.startswith('DELETE FROM'):
+                #print("Error: invalid input (and no semi-colon at end of input).")
+                #continue
 
             elif upperInput.startswith('CREATE DATABASE') and len(listInput) == 3:
                 createDatabase(listInput[2].replace(';', ''), cwd)
@@ -240,16 +349,43 @@ def main():
                     insertData(listInput, os.path.join(cwd, dbToUse))
 
             elif upperInput.startswith('UPDATE') and len(listInput) == 2:
-                updateData(listInput[1], cwd)
+                if dbToUse == '':
+                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data in " + listInput[2] + " because no database is being used.")
+                else:
+                    updateLineInfo, counter = '', 0
+                    while True or counter > 3:
+                        line = input()
+                        if ';' not in line:
+                            updateLineInfo += ' ' + line
+                            counter += 1
+                        else:
+                            updateLineInfo += ' ' + line
+                            break
 
-            elif upperInput.startswith('DELETE FROM'):
-                removeData()
+                    if len(updateLineInfo.split(" ")) == 9:
+                        updateData(listInput[1], updateLineInfo.split(" "), os.path.join(cwd, dbToUse))
+                    else:
+                        print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data due to invalid number of commands.")
+                        print(updateLineInfo)
 
-# modify and query - should be easy
-# delete - move the tuples around?
+            elif upperInput.startswith('DELETE FROM') and len(listInput) == 3:
+                if dbToUse == '':
+                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data in " + listInput[2] + " because no database is being used.")
+                else:
+                    updateLineInfo, counter = '', 0
+                    while True or counter > 2:
+                        line = input()
+                        if ';' not in line:
+                            updateLineInfo += ' ' + line
+                            counter += 1
+                        else:
+                            updateLineInfo += ' ' + line
+                            break
+                    removeData(listInput[2], updateLineInfo.split(" ") , os.path.join(cwd, dbToUse))
 
             else:
                 print("Error: invalid input.")
+                print(userInput)
                 continue
     
         print("All done.")
