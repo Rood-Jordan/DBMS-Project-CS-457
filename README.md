@@ -157,7 +157,7 @@ All if not most of these functionalities are implemented using fileIO and the os
 The functionality for storing data tuples within tables is made up of multiple steps. First being that a database must be specified to be in use before any interaction with a table can occur.  Therefore, if a tuple is to be inserted without a database in use, then an error message with be displayed to the user.  If a database is specified to be in use, then the input is taken and the table name specified along with its values are parsed to be formatted and appended to the table file.  The values given are formatted using the '|' symbol to distinguish between the differing columns.  Finally, this formatting is done and the tuple is inserted into the given table by appending using file IO operations.
 
 ---
-## How required functionalities corresponding to tuple insertion, deletion, modification, and query
+## How required functionalities correspond to tuple insertion, deletion, modification, and query
 
 All the functionalities are designed around the use of a multitude of file IO operations due to the layout of databases being folder directories and tables being files within those folders.  The tuple insertion as discussed in section above  is done through taking command from user, parsing input data values, and writing the formatted data into the corresponding table, or file.  Tuple deletion is opposite in that the parameters given to remove are evaluated from the read in table contents and only those that are not matched to the bounds to delete are written back to the file.  This ultimately deletes the data specified from the table file.  
 
