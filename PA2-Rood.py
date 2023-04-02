@@ -144,6 +144,9 @@ def alterTable(input: list, cwd: str):
 
 
 def insertData(data: list, cwd: str):
+    # takes in data to insert as a list and path so specified table can be found and used
+    # data list is iterated through for parsing and formatting
+    # then formatted data is appended into table file 
 
     tblName = data[2]
     tblPath = os.path.join(cwd, tblName)
@@ -167,8 +170,12 @@ def insertData(data: list, cwd: str):
 
         print("1 new record inserted.")
 
-
+# update data helper function
 def processFileData(data: list, setAttr: str, whereAttr: str, dataToFind: str, dataToSet: str) -> list:
+    # filters through file data to match values to corresponding columns
+    # then it analyzes for matches in data if they fall into the parameters given by user the updates are made
+    # through updating a list to return to update function 
+
     splitLines = splitFileData(data)
     
     indexToReplaceAt, colToSetAt, recordsModified = 0, 0, 0
@@ -195,19 +202,21 @@ def processFileData(data: list, setAttr: str, whereAttr: str, dataToFind: str, d
 
 
 def updateData(tblName: str, modifyInfoLst: list, cwd: str):
+    # takes in update parameters from user and validates and parses it to send to helper function for updates
+    # then list is returned from helper function to then be written back to the table file line by line
+
     tblPath = os.path.join(cwd, tblName)
-    #print(modifyInfoLst)
 
     if len(modifyInfoLst) >= 9 and 'set' in modifyInfoLst and 'where' in modifyInfoLst:
-        modifyInfoLst.remove('\r')
+        inputList = [elem for elem in modifyInfoLst if elem != '']
+        parsedInput = [i for i in inputList if i != '\r']
 
-        #inputList = [elem for elem in modifyInfoLst if elem != '']
-        #print(inputList)
-        attributeToSet = modifyInfoLst[2]
-        attributeToFind = modifyInfoLst[6]
+        attributeToSet = parsedInput[1]
+        attributeToFind = parsedInput[5]
 
-        dataToFind = modifyInfoLst[8].replace(';', '').replace('\'', '').replace('\r', '')
-        dataToSet = modifyInfoLst[4].replace('\'', '')
+        dataToFind = parsedInput[7].replace(';', '').replace('\'', '').replace('\r', '')
+        dataToSet = parsedInput[3].replace('\'', '')
+        #print(dataToFind, dataToSet)
 
         fp = open(tblPath, 'r')
         fileData = fp.readlines()
@@ -225,6 +234,10 @@ def updateData(tblName: str, modifyInfoLst: list, cwd: str):
 
 
 def removeData(tblName: str, whereStmt: list, cwd: str):
+    # File IO operations are used to read file data and check lines (aka tuples) for matching attributes
+    # from specified values to delete. Function ensures that correct attribute types are being checked.
+    # Then, updates are made to list of lines and written back with deleted info removed
+
     numDeleted, attributeToCheck = 0, ''
     tblPath = os.path.join(cwd, tblName)
 
@@ -248,6 +261,7 @@ def removeData(tblName: str, whereStmt: list, cwd: str):
         if attributeToCheck in attributeType:
             indexToCheck = i
 
+    # iterates over filedata from back to front so that pop() does not cause problems to traversal
     for j in range(len(data)-1, 0, -1):
         if operator == '=':
             if data[j][indexToCheck] == operand:
@@ -258,7 +272,7 @@ def removeData(tblName: str, whereStmt: list, cwd: str):
                 data.pop(j)
                 numDeleted += 1
         else:
-            #other operands for extension
+            #other operands for extension in next assignments
             continue
 
     finalData = ['|'.join(x) for x in data]
@@ -272,7 +286,7 @@ def removeData(tblName: str, whereStmt: list, cwd: str):
         print(str(numDeleted) + " records deleted.")
 
 
-#helper function
+#helper function - splits lines of data up from file readlines()
 def splitFileData(data: list) -> list:
     splitLines = []
     for line in data:
@@ -283,6 +297,10 @@ def splitFileData(data: list) -> list:
 
 
 def selectTableWithAttributes(infoLst: list, whereStmt: str, cwd: str):
+    # function parses where commands and select commands to compare read in data points
+    # from file to where boundaries and if select and where bounds apply, then the data
+    # is formatted and printed
+
     splitWhereStmt = whereStmt.split(" ")
     tblName = infoLst[5].capitalize()
     tblPath = os.path.join(cwd, tblName)
@@ -300,6 +318,10 @@ def selectTableWithAttributes(infoLst: list, whereStmt: str, cwd: str):
                 break
 
         attributesToQuery.remove('select')
+        if '' in attributesToQuery:
+            attributesToQuery.remove('')
+        if '\r' in attributesToQuery:
+            attributesToQuery.remove('\r')
 
         file = open(tblPath, 'r')
         fileData = file.readlines()
