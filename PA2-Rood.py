@@ -57,16 +57,15 @@ def createTable(input: list, cwd: str, dbToUse: str):
         print(Fore.RED + "!Failed " + Style.RESET_ALL + "to create table " + input[2] + " because it already exists.")
     else:
         if not len(input) >= 5:
-            print("Error: invalid input.")
+            print("Error: invalid input - not enough attribute titles.")
             return
         
         attributeStr = ''
         
         for i in range(3, len(input), 2):
-            # print("i = ", i)
 
             attributeName = re.sub(";|,", "", input[i])
-            attributeType = re.sub(";|,", "", input[i + 1])
+            attributeType = re.sub(";|,|\r", "", input[i + 1])
 
             # print("AttributeName = ", attributeName)
             # print("AttributeType = ", attributeType)
@@ -79,7 +78,7 @@ def createTable(input: list, cwd: str, dbToUse: str):
 
         if attributeStr.endswith('|'):
             # format to make sure | is not at end of string
-            attributeStr = attributeStr[:-3]
+            attributeStr = attributeStr[:-1]
 
         with open(tablePath, 'w') as fp:
             fp.write(attributeStr + "\n")
@@ -170,11 +169,6 @@ def insertData(data: list, cwd: str):
 
 
 def processFileData(data: list, setAttr: str, whereAttr: str, dataToFind: str, dataToSet: str) -> list:
-    # splitLines = []
-    # for line in data:
-    #     splitData = line.replace('\n', '').replace('\t', '').split('|')
-    #     splitLines.append(splitData)
-
     splitLines = splitFileData(data)
     
     indexToReplaceAt, colToSetAt, recordsModified = 0, 0, 0
@@ -193,23 +187,26 @@ def processFileData(data: list, setAttr: str, whereAttr: str, dataToFind: str, d
             recordsModified += 1
 
     if recordsModified == 1:
-        print(recordsModified, " record modified.")
+        print(str(recordsModified) + " record modified.")
     else:
-        print(recordsModified, " records modified.")
+        print(str(recordsModified) + " records modified.")
 
-    print(['|'.join(x) for x in splitLines])
     return ['|'.join(x) for x in splitLines]
 
 
 def updateData(tblName: str, modifyInfoLst: list, cwd: str):
-    recordsModified = 0
     tblPath = os.path.join(cwd, tblName)
+    #print(modifyInfoLst)
 
-    if len(modifyInfoLst) == 9 and 'set' in modifyInfoLst and 'where' in modifyInfoLst:
+    if len(modifyInfoLst) >= 9 and 'set' in modifyInfoLst and 'where' in modifyInfoLst:
+        modifyInfoLst.remove('\r')
+
+        #inputList = [elem for elem in modifyInfoLst if elem != '']
+        #print(inputList)
         attributeToSet = modifyInfoLst[2]
         attributeToFind = modifyInfoLst[6]
 
-        dataToFind = modifyInfoLst[8].replace(';', '').replace('\'', '')
+        dataToFind = modifyInfoLst[8].replace(';', '').replace('\'', '').replace('\r', '')
         dataToSet = modifyInfoLst[4].replace('\'', '')
 
         fp = open(tblPath, 'r')
@@ -227,12 +224,15 @@ def updateData(tblName: str, modifyInfoLst: list, cwd: str):
         print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data due to invalid input.")
 
 
-def removeData(tblName: str, whereLst: list, cwd: str):
+def removeData(tblName: str, whereStmt: list, cwd: str):
     numDeleted, attributeToCheck = 0, ''
     tblPath = os.path.join(cwd, tblName)
 
-    if len(whereLst) == 5 and 'where' in whereLst:
-        attributeToCheck = whereLst[2]
+    if not os.path.exists(tblPath):
+        print(Fore.RED + "!Failed " + Style.RESET_ALL + "to delete data from table " + tblName.replace('\r', '') + " because table not found.")
+
+    if len(whereStmt) == 5 and 'where' in whereStmt:
+        attributeToCheck = whereStmt[2]
     
     file = open(tblPath, 'r')
     fileData = file.readlines()
@@ -240,29 +240,26 @@ def removeData(tblName: str, whereLst: list, cwd: str):
     data = splitFileData(fileData)
     file.close()    
 
-    operator = whereLst[3]
-    operand = whereLst[4].replace(';', '').replace('\'', '')
+    operator = whereStmt[3]
+    operand = whereStmt[4].replace(';', '').replace('\'', '').replace('\r', '')
     
     indexToCheck = 0
     for i, attributeType in enumerate(data[0]):
-        #print(attributeToCheck, attributeType, i)
         if attributeToCheck in attributeType:
             indexToCheck = i
 
-    #print("index to check is ", indexToCheck)
-    for j in range(len(data)-1, 1, -1):
+    for j in range(len(data)-1, 0, -1):
         if operator == '=':
             if data[j][indexToCheck] == operand:
                 data.pop(j)
                 numDeleted += 1
         elif operator == '>':
-            if data[j][indexToCheck] > operand:
+            if float(data[j][indexToCheck]) > float(operand):
                 data.pop(j)
                 numDeleted += 1
         else:
             #other operands for extension
             continue
-        #print(data)
 
     finalData = ['|'.join(x) for x in data]
     fp =  open(tblPath, 'w')
@@ -270,12 +267,12 @@ def removeData(tblName: str, whereLst: list, cwd: str):
     fp.close()
 
     if numDeleted == 1:
-        print(numDeleted, "record deleted.")
+        print(str(numDeleted) + " record deleted.")
     else:
-        print(numDeleted, "records deleted.")
+        print(str(numDeleted) + " records deleted.")
 
 
-#helper functions
+#helper function
 def splitFileData(data: list) -> list:
     splitLines = []
     for line in data:
@@ -284,6 +281,50 @@ def splitFileData(data: list) -> list:
 
     return splitLines
 
+
+def selectTableWithAttributes(infoLst: list, whereStmt: str, cwd: str):
+    splitWhereStmt = whereStmt.split(" ")
+    tblName = infoLst[5].capitalize()
+    tblPath = os.path.join(cwd, tblName)
+    operator, operand = splitWhereStmt[2], splitWhereStmt[3].replace(';', '').replace('\r', '')
+    boundArg = splitWhereStmt[1]
+
+    if not os.path.exists(tblPath):
+        print(Fore.RED + "!Failed " + Style.RESET_ALL + "to query table " + tblName + " because it does not exist.")
+    else:
+        attributesToQuery = []
+        for data in infoLst:
+            if data != 'from':
+                attributesToQuery.append(data.replace(',', ''))
+            else:
+                break
+
+        attributesToQuery.remove('select')
+
+        file = open(tblPath, 'r')
+        fileData = file.readlines()
+        splitByAttribute = [line.split("|") for line in fileData]
+        file.close()
+
+        indiciesToPrint, indexToCheck = [], 0
+        attributeTitles = splitByAttribute[0]
+        for index, attribute in enumerate(attributeTitles):
+            
+            for i in attributesToQuery:
+                if i in attribute:
+                    indiciesToPrint.append(index)
+                elif i in boundArg:
+                    indexToCheck = index
+
+        for j in range(0, len(splitByAttribute)):
+            for k in indiciesToPrint:
+                if operator == '!=' and splitByAttribute[j][indexToCheck] == operand:
+                        continue
+                elif k % len(indiciesToPrint) == 0:
+                    print(splitByAttribute[j][k].replace('\n', ''))
+                else:
+                    print(splitByAttribute[j][k].replace('\n', '') + '|', end="")            
+    
 
 def main(): 
     try:
@@ -295,8 +336,6 @@ def main():
 
             upperInput = userInput.upper()
             listInput = userInput.split(" ")
-
-            #print(listInput)
             
             if userInput.startswith('--') or userInput == '' or userInput == '\r':
                 pass
@@ -309,51 +348,50 @@ def main():
                 #continue
 
             elif upperInput.startswith('CREATE DATABASE') and len(listInput) == 3:
-                createDatabase(listInput[2].replace(';', ''), cwd)
+                createDatabase(listInput[2].replace(';', '').replace('\r', ''), cwd)
 
             elif upperInput.startswith('DROP DATABASE') and len(listInput) == 3:
-                dropDatabase(listInput[2].replace(';', ''), cwd)
+                dropDatabase(listInput[2].replace(';', '').replace('\r', ''), cwd)
 
             elif upperInput.startswith('USE') and len(listInput) == 2:
-                dbToUse = useDatabase(listInput[1].replace(';', ''), cwd)
+                dbToUse = useDatabase(listInput[1].replace(';', '').replace('\r', ''), cwd)
 
             elif upperInput.startswith('CREATE TABLE') and len(listInput) >= 5:
                 if dbToUse == '':
-                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to create table " + listInput[2] + " because no database is being used.")
+                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to create table " + listInput[2].replace('\r', '') + " because no database is being used.")
                 else:
                     createTable(listInput, cwd, dbToUse)
 
             elif upperInput.startswith('DROP TABLE') and len(listInput) == 3:
                 if dbToUse == '':
-                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to drop table " + listInput[2] + " because no database is being used.")
+                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to drop table " + listInput[2].replace('\r', '') + " because no database is being used.")
                 else:
-                    dropTable(listInput[2].replace(';', ''), os.path.join(cwd, dbToUse))
+                    dropTable(listInput[2].replace(';', '').replace('\r', ''), os.path.join(cwd, dbToUse))
 
             elif upperInput.startswith('SELECT * FROM') and len(listInput) == 4:
                 if dbToUse == '':
-                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to query table " + listInput[3].replace(';', '') + " because no database is being used.")
+                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to query table " + listInput[3].replace(';', '').replace('\r', '') + " because no database is being used.")
                 else:
-                    selectTable(listInput[3].replace (';', ''), os.path.join(cwd, dbToUse))
+                    selectTable(listInput[3].replace (';', '').replace('\r', ''), os.path.join(cwd, dbToUse))
 
             elif upperInput.startswith('ALTER TABLE') and 'ADD' in upperInput and len(listInput) == 6:
                 if dbToUse == '':
-                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to alter table " + listInput[2] + " because no database is being used.")
+                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to alter table " + listInput[2].replace('\r', '') + " because no database is being used.")
                 else:
-                    alterTable(listInput, os.path.join(cwd, dbToUse.replace(';', '')))
-
+                    alterTable(listInput, os.path.join(cwd, dbToUse.replace(';', '').replace('\r', '')))
 
             elif upperInput.startswith('INSERT INTO') and 'VALUES' in upperInput and len(listInput) >= 4:
                 if dbToUse == '':
-                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to alter table " + listInput[2] + " because no database is being used.")
+                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to alter table " + listInput[2].replace('\r', '') + " because no database is being used.")
                 else:
-                    insertData(listInput, os.path.join(cwd, dbToUse))
+                    insertData(listInput, os.path.join(cwd, dbToUse.replace('\r', '')))
 
-            elif upperInput.startswith('UPDATE') and len(listInput) == 2:
+            elif upperInput.startswith('UPDATE') and len(listInput) >= 2 and len(listInput) < 4:
                 if dbToUse == '':
-                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data in " + listInput[2] + " because no database is being used.")
+                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data in " + listInput[1] + " because no database is being used.")
                 else:
                     updateLineInfo, counter = '', 0
-                    while True or counter > 3:
+                    while True or counter <= 3:
                         line = input()
                         if ';' not in line:
                             updateLineInfo += ' ' + line
@@ -362,27 +400,42 @@ def main():
                             updateLineInfo += ' ' + line
                             break
 
-                    if len(updateLineInfo.split(" ")) == 9:
+                    if len(updateLineInfo.split(" ")) >= 9 and len(updateLineInfo.split(" ")) < 11:
                         updateData(listInput[1], updateLineInfo.split(" "), os.path.join(cwd, dbToUse))
                     else:
                         print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data due to invalid number of commands.")
-                        print(updateLineInfo)
 
-            elif upperInput.startswith('DELETE FROM') and len(listInput) == 3:
+            elif upperInput.startswith('DELETE FROM') and len(listInput) >= 3 and len(listInput) < 5:
                 if dbToUse == '':
-                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data in " + listInput[2] + " because no database is being used.")
+                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data in " + listInput[2].capitalize() + " because no database is being used.")
                 else:
-                    updateLineInfo, counter = '', 0
-                    while True or counter > 2:
+                    delLineInfo, counter = '', 0
+                    while True or counter <= 2:
                         line = input()
                         if ';' not in line:
-                            updateLineInfo += ' ' + line
+                            delLineInfo += ' ' + line
                             counter += 1
                         else:
-                            updateLineInfo += ' ' + line
+                            delLineInfo += ' ' + line
                             break
-                    removeData(listInput[2], updateLineInfo.split(" ") , os.path.join(cwd, dbToUse))
+                    removeData(listInput[2].capitalize(), delLineInfo.split(" ") , os.path.join(cwd, dbToUse))
 
+            elif upperInput.startswith('SELECT') and len(listInput) >= 3 and len(listInput) < 5:
+                if dbToUse == '':
+                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data in " + listInput[2].capitalize() + " because no database is being used.")
+                else: 
+                    lineInfo, whereStr, counter = userInput, '', 0
+                    while True or counter <= 3:
+                        line = input()
+                        if ';' not in line:
+                            lineInfo += ' ' + line
+                            counter += 1
+                        else:
+                            lineInfo += ' ' + line
+                            whereStr = line
+                            break
+                    selectTableWithAttributes(lineInfo.split(" "), whereStr, os.path.join(cwd, dbToUse))  
+                          
             else:
                 print("Error: invalid input.")
                 print(userInput)
@@ -393,7 +446,6 @@ def main():
         print(" You cancelled the operation.")
     except:
         print("Error: exception occurred!")
-
 
 if __name__ == "__main__":
     main()
