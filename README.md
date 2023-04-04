@@ -18,7 +18,7 @@ Furthermore, this program allows insertion, deletion, and modification to tuples
 
 - **Table creation** to make file in designated database folder under input table and **
 
-- **Tuple insertersion** by appending parsed and formatted data to table (file) specified
+- **Tuple insertion** by appending parsed and formatted data to table (file) specified
 
 - **Tuple deletion** by reading table data from file, parsing out/removing the given matching arguments, and writing remaining data back to table file.
 ---
