@@ -358,6 +358,9 @@ def selectTableWithAttributes(infoLst: list, whereStmt: list, cwd: str):
     
 
 def fromParser(input:list):
+    # function takes input list from user to then parse and remove not needed 
+    # information to for selections and joins
+
     fromList = []    
         
     for x in input:
@@ -370,15 +373,13 @@ def fromParser(input:list):
     return fromList
 
 def queryAndJoinTables(input: list, whereList: list, cwd: str):
+    # this function uses helper fromParser function to parse input command data
+    # then uses this to find two tables to join or inner join.  Table files are opened
+    # and read from by lines and a nested loop is used to compare and print joined table 
+    # data based on query parameters.  Indicies are found before comparison so that correct 
+    # attribute fields are being analyzed.
 
     fromList = fromParser(input)
-    # for x in input:
-    #     if x == "select" or x == "\r" or x == "*":
-    #         pass
-    #     elif x == 'where':
-    #         break
-    #     else:
-    #         fromList.append(x.replace(',', ''))
 
     if 'inner' and 'join' in fromList:
         tbl1, tbl2 = fromList[1], fromList[5]
@@ -402,10 +403,6 @@ def queryAndJoinTables(input: list, whereList: list, cwd: str):
         tblOneIndex, tblTwoIndex = 0, 0
         print(attributeFields)
 
-        print(operand1, operator, operand2)
-        #print(fileData1)
-        #print(fileData2)
-
         # find indicies (from both tables) to check in nested for loop for joining
         for index, attr in enumerate(fileData1[0].split("|")):
             if operand1 in attr:
@@ -426,6 +423,12 @@ def queryAndJoinTables(input: list, whereList: list, cwd: str):
 
 
 def leftOuterJoin(input: list, whereLst: list, cwd: str):
+    # implements left outer join functionality through use of file IO operations to 
+    # check two tables and find indicies to compare parameters given for join table 
+    # result.  Nested for loop is used to compare the two data file contents and 
+    # if equal a join is done and if not equal with other data from second table 
+    # after all comparisons, then table 1 contents printed with null values.
+
     fromList = fromParser(input)
     tbl1, tbl2 = fromList[1], fromList[6]
 
@@ -453,12 +456,16 @@ def leftOuterJoin(input: list, whereLst: list, cwd: str):
             if operand2 in attr:
                 tblTwoIndex = index
 
+        # iterate through both file contents comparing data and having left outer joins printed
+        nullCount = 0
         for i in range(1, len(tblData1)):
             for j in range(1, len(tblData2)):
                 if operator == '=' and tblData1[i].split("|")[tblOneIndex] == tblData2[j].split("|")[tblTwoIndex]:
                     print(tblData1[i].replace('\n', '') + "|" + tblData2[j].replace('\n', ''))
-                else:
-                    print(tblData1[i].replace('\n', '') + "|" + "|")
+                    nullCount += 1
+            if nullCount == 0:
+                print(tblData1[i].replace('\n', '') + "|" + "|")
+            nullCount = 0
 
         file1.close()
         file2.close()
