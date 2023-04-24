@@ -364,7 +364,7 @@ def fromParser(input:list):
     fromList = []    
         
     for x in input:
-        if x == "select" or x == "\r" or x == "*":
+        if x == "select" or x == "\r" or x == "*" or x == '':
             pass
         elif x == 'where':
             break
