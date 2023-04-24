@@ -1,4 +1,4 @@
-# PA2-CS-457 METADATA MANAGEMENT SYSTEM & Basic Data Manipulation
+# PA3-CS-457 METADATA MANAGEMENT SYSTEM, Basic Data Manipulation, and Table Joins
 
 ## Student Name: Jordan Rood
 ---
@@ -8,6 +8,8 @@ Metadata meaning the database's high-level info (db's name, creation date/time, 
 
 Furthermore, this program allows insertion, deletion, and modification to tuples within tables.  Extension has also been made to the select command where basic select commands with attribute title specification and basic query operations on data withing tables.
 
+Table joins functionality is also implemented with differing syntactical commands for specific joins such as inner join or left outer join.
+
 **Data is persistent (e.g., stored on hard drive) through use of relative path functionality.**
 
 ---
@@ -16,11 +18,14 @@ Furthermore, this program allows insertion, deletion, and modification to tuples
 
 - **Database creation** to make folder directory under input database name and **database deletion** by removing folder directory input by user.
 
-- **Table creation** to make file in designated database folder under input table and **
+- **Table creation** to make file in designated database folder under input table and **table deletion** to delete specified tables input by user.
 
-- **Tuple insertersion** by appending parsed and formatted data to table (file) specified
+- **Tuple insertion** by appending parsed and formatted data to table (file) specified
 
 - **Tuple deletion** by reading table data from file, parsing out/removing the given matching arguments, and writing remaining data back to table file.
+
+- **Table joins** to join two tables within a database based on input criteria/commands.  Specific functionality supports inner joins and left outer joins.
+
 ---
 ## Requirements
 
@@ -38,6 +43,8 @@ Furthermore, this program allows insertion, deletion, and modification to tuples
 - INSERT DATA: adds data into specified table relating to metadata input from creation of that table prior.
 - UPDATE DATA: modifies data in table based on specifications given (e.g., changing price where name is 'Gizmo' at every occurrence within a table).
 - REMOVE DATA: deletes data from table based on given bounds or parameters.
+- INNER JOIN TABLES - two basic syntax to compare attribute fields in two tables and join them together if equal comparison.
+- LEFT OUTER JOIN TABLES - similar to inner join with comparision between table fields but joins onto the first table input by user.
 
 ---
 ## Sample Execution, Output, and Usage Examples
@@ -48,13 +55,13 @@ Program can be ran by file input or by inputing all commands individually on com
 
 To run program by file or script input:
 ```
-$ python PA2-Rood.py < PA2_test.sql
+$ python PA3-Rood.py < PA3_test.sql
 ```
 
 To run program and input commands individually simply run the python program:
 
 ```
-$ python PA2-Rood.py
+$ python PA3-Rood.py
 ```
 and input commands and arguments:
 ```
@@ -63,75 +70,64 @@ COMMANDS <arguments>;
 
 Additional example input and output is as follows:
 ```
---CS 457 PA2 test script
+--CS457 PA3
 
-CREATE DATABASE CS457_PA2;
-USE CS457_PA2;
-CREATE TABLE Product (pid int, name varchar(20), price float);
+--Construct the database and table (0 points; expected to work from PA1)
+CREATE DATABASE CS457_PA3;
+USE CS457_PA3;
+create table Employee(id int, name varchar(10));
+create table Sales(employeeID int, productID int);
 
-insert into Product values(1,	'Gizmo',      	19.99);
-insert into Product values(2,	'PowerGizmo', 	29.99);
-insert into Product values(3,	'SingleTouch', 	149.99);
-insert into Product values(4,	'MultiTouch', 	199.99);
-insert into Product values(5,	'SuperGizmo', 	49.99);
+--Insert new data (0 points; expected to work from PA2)
+insert into Employee values(1,'Joe');
+insert into Employee values(2,'Jack');
+insert into Employee values(3,'Gill');
+insert into Sales values(1,344);
+insert into Sales values(1,355);
+insert into Sales values(2,544);
 
-select * from Product;
+-- The following will miss Gill (2 points)
+select * 
+from Employee E, Sales S 
+where E.id = S.employeeID;
 
-update Product 
-set name = 'Gizmo' 
-where name = 'SuperGizmo';
+-- This is the same as above but with a different syntax (3 points)
+select * 
+from Employee E inner join Sales S 
+on E.id = S.employeeID;
 
-update Product 
-set price = 14.99 
-where name = 'Gizmo';
-
-select * from Product;
-
-delete from product 
-where name = 'Gizmo';
-
-delete from product 
-where price > 150;
-
-select * from Product;
-
-select name, price 
-from product 
-where pid != 2;
+-- The following will include Gill (5 points)
+select * 
+from Employee E left outer join Sales S 
+on E.id = S.employeeID;
 
 .exit
 
 -- Expected output
 --
--- Database CS457_PA2 created.
--- Using database CS457_PA2.
--- Table Product created.
+-- Database CS457_PA3 created.
+-- Using database CS457_PA3.
+-- Table Employee created.
+-- Table Sales created.
 -- 1 new record inserted.
 -- 1 new record inserted.
 -- 1 new record inserted.
 -- 1 new record inserted.
 -- 1 new record inserted.
--- pid int|name varchar(20)|price float
--- 1|Gizmo|19.99
--- 2|PowerGizmo|29.99
--- 3|SingleTouch|149.99
--- 4|MultiTouch|199.99
--- 5|SuperGizmo|49.99
--- 1 record modified.
--- 2 records modified.
--- pid int|name varchar(20)|price float
--- 1|Gizmo|14.99
--- 2|PowerGizmo|29.99
--- 3|SingleTouch|149.99
--- 4|MultiTouch|199.99
--- 5|Gizmo|14.99
--- 2 records deleted.
--- 1 record deleted.
--- pid int|name varchar(20)|price float
--- 2|PowerGizmo|29.99
--- 3|SingleTouch|149.99
--- name varchar(20)|price float
--- SingleTouch|149.99
+-- 1 new record inserted.
+-- id int|name varchar(10)|employeeID int|productID int
+-- 1|Joe|1|344
+-- 1|Joe|1|355
+-- 2|Jack|2|544
+-- id int|name varchar(10)|employeeID int|productID int
+-- 1|Joe|1|344
+-- 1|Joe|1|355
+-- 2|Jack|2|544
+-- id int|name varchar(10)|employeeID int|productID int
+-- 1|Joe|1|344
+-- 1|Joe|1|355
+-- 2|Jack|2|544
+-- 3|Gill||
 -- All done.
 ```
 ---
@@ -168,3 +164,8 @@ Finally, the query operation was updated so that specified attribute columns can
 ---
 ## How inner join and left outer join are implemented
 
+The table join functionality is split up between a couple functions that are used based on the syntax input by the database user.  In both the join/inner join function and left outer join function, a helper parser function is used to filter through the input given by the user.  This returns a list of the parsed data needed to determine the corresponding tables needed to be read in for the joins.  In both join functions, the table paths are both checked to ensure validity of tables desired to be joined and if valid the function moves on to open and read the designated files line by line.  Next, the attribute fields are printed from tables and they are compared to the command input by the user to mark the indices (attribute fields within the file) that need to be checked and/or compared.
+
+Further, the function continues on to a nested for loop which essentially compares all tuples in first designated table to all other tuples in second designated table.  If they are equal corresponding to the operator then the join of the tables is done and printed.  For left outer join, the implemented functionality differs through further checks done in the nested for loop that is comparing the attribute fields specified.  A left outer join, joins based on the comparison given if they fields are equal.  However, the fields of table 1 are printed with null values (or empty string) if none are equal because a left outer join is meant to join onto left table (aka first table in our implementation)
+
+Overall, nested for loops coupled with File IO are used to implement the comparisons for both inner joins and left outer joins similar to SQL.
