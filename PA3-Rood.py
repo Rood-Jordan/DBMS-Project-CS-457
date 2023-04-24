@@ -1,7 +1,7 @@
 # Author: Jordan Rood 
 # CS 457 : DATABASE MANAGEMENT SYSTEMS
-# Programming Assignment 2 - Basic Data Manipulation: built off previous assignments Metadata Management System
-# Date: 03-22-2023
+# Programming Assignment 3 - Table Joins: built off previous assignment(s) Basic Data Manipulation and Metadata Management System
+# Date: 04-10-2023
 
 import os, sys
 import shutil
@@ -51,7 +51,8 @@ def createTable(input: list, cwd: str, dbToUse: str):
     # once file is created the tables attribute names are written to file using loop and string logic
     # to parse and format attribute field names correctly in table file
 
-    tablePath = os.path.join(cwd, dbToUse, input[2])    
+    tblName = input[2].replace('(', ' ').split(' ')[0]
+    tablePath = os.path.join(cwd, dbToUse, tblName)    
 
     if os.path.exists(tablePath):
         print(Fore.RED + "!Failed " + Style.RESET_ALL + "to create table " + input[2] + " because it already exists.")
@@ -61,20 +62,29 @@ def createTable(input: list, cwd: str, dbToUse: str):
             return
         
         attributeStr = ''
-        
-        for i in range(3, len(input), 2):
+
+        if len(input) % 2 == 0:
+            startVal = 2
+        else:
+            startVal = 3
+
+        for i in range(startVal, len(input), 2):
 
             attributeName = re.sub(";|,", "", input[i])
             attributeType = re.sub(";|,|\r", "", input[i + 1])
 
-            # print("AttributeName = ", attributeName)
-            # print("AttributeType = ", attributeType)
+            if '(' in attributeName:
+                attributeName = attributeName.replace('(', ' ').split(' ')[-1]
+
+            #print("AttributeName = ", attributeName)
+            #print("AttributeType = ", attributeType)
 
             if attributeType.count(')') >= 2 or (attributeType.count(')') == 1 and attributeType.count('(') != 1):
                 # if type string contains unbalanced amount of parentheses
                 attributeType = attributeType[:-1]
 
             attributeStr += attributeName.replace('(', '') + ' ' +  attributeType + '|'
+
 
         if attributeStr.endswith('|'):
             # format to make sure | is not at end of string
@@ -84,7 +94,7 @@ def createTable(input: list, cwd: str, dbToUse: str):
             fp.write(attributeStr + "\n")
             pass
         fp.close()
-        print("Table " + input[2] + " created.")
+        print("Table " + tblName + " created.")
 
 
 def dropTable(tableName: str, cwd: str):
@@ -296,16 +306,15 @@ def splitFileData(data: list) -> list:
     return splitLines
 
 
-def selectTableWithAttributes(infoLst: list, whereStmt: str, cwd: str):
+def selectTableWithAttributes(infoLst: list, whereStmt: list, cwd: str):
     # function parses where commands and select commands to compare read in data points
     # from file to where boundaries and if select and where bounds apply, then the data
     # is formatted and printed
 
-    splitWhereStmt = whereStmt.split(" ")
     tblName = infoLst[5].capitalize()
     tblPath = os.path.join(cwd, tblName)
-    operator, operand = splitWhereStmt[2], splitWhereStmt[3].replace(';', '').replace('\r', '')
-    boundArg = splitWhereStmt[1]
+    operator, operand = whereStmt[2], whereStmt[3].replace(';', '').replace('\r', '')
+    boundArg = whereStmt[1]
 
     if not os.path.exists(tblPath):
         print(Fore.RED + "!Failed " + Style.RESET_ALL + "to query table " + tblName + " because it does not exist.")
@@ -348,6 +357,113 @@ def selectTableWithAttributes(infoLst: list, whereStmt: str, cwd: str):
                     print(splitByAttribute[j][k].replace('\n', '') + '|', end="")            
     
 
+def fromParser(input:list):
+    fromList = []    
+        
+    for x in input:
+        if x == "select" or x == "\r" or x == "*":
+            pass
+        elif x == 'where':
+            break
+        else:
+            fromList.append(x.replace(',', ''))
+    return fromList
+
+def queryAndJoinTables(input: list, whereList: list, cwd: str):
+
+    fromList = fromParser(input)
+    # for x in input:
+    #     if x == "select" or x == "\r" or x == "*":
+    #         pass
+    #     elif x == 'where':
+    #         break
+    #     else:
+    #         fromList.append(x.replace(',', ''))
+
+    if 'inner' and 'join' in fromList:
+        tbl1, tbl2 = fromList[1], fromList[5]
+    else:
+        tbl1, tbl2 = fromList[1], fromList[3]
+
+    if not os.path.exists(os.path.join(cwd, tbl1)) and os.path.exists(os.path.join(cwd, tbl2)):
+        print(Fore.RED + "!Failed " + Style.RESET_ALL + "to join tables because one or both do not exist.")
+    else:
+        operator, operand1, operand2 = whereList[2], whereList[1].split(".")[1], whereList[3].replace(';', '').replace('\r', '').split(".")[1]
+
+        file1 = open(os.path.join(cwd, tbl1), 'r')
+        file2 = open(os.path.join(cwd, tbl2), 'r')
+
+        fileData1 = file1.readlines()
+        fileData2 = file2.readlines()
+
+        #print(fromList)
+        #print(whereList)
+        attributeFields = fileData1[0].strip() + '|' + fileData2[0].strip()
+        tblOneIndex, tblTwoIndex = 0, 0
+        print(attributeFields)
+
+        print(operand1, operator, operand2)
+        #print(fileData1)
+        #print(fileData2)
+
+        # find indicies (from both tables) to check in nested for loop for joining
+        for index, attr in enumerate(fileData1[0].split("|")):
+            if operand1 in attr:
+                tblOneIndex = index
+
+        for index, attr in enumerate(fileData2[0].split("|")):
+            if operand2 in attr:
+                tblTwoIndex = index
+
+        for i in fileData1:
+            for j in fileData2:
+                #check condition parsed from the given query
+                if operator == '=' and i.split("|")[tblOneIndex] == j.split("|")[tblTwoIndex]:
+                    print(i.replace('\n', '') + "|" + j.replace('\n', ''))
+
+        file1.close()
+        file2.close()
+
+
+def leftOuterJoin(input: list, whereLst: list, cwd: str):
+    fromList = fromParser(input)
+    tbl1, tbl2 = fromList[1], fromList[6]
+
+    if not os.path.exists(os.path.join(cwd, tbl1)) and os.path.exists(os.path.join(cwd, tbl2)):
+        print(Fore.RED + "!Failed " + Style.RESET_ALL + "to join tables because one or both do not exist.")
+    else:
+        file1 = open(os.path.join(cwd, tbl1))
+        file2 = open(os.path.join(cwd, tbl2))
+
+        tblData1 = file1.readlines()
+        tblData2 = file2.readlines()
+
+        attributeFields = tblData1[0].strip() + '|' + tblData2[0].strip()
+        tblOneIndex, tblTwoIndex = 0, 0
+        operator, operand1, operand2 = whereLst[2], whereLst[1].split(".")[1], whereLst[3].replace(';', '').replace('\r', '').split(".")[1]
+
+        print(attributeFields)
+
+        # find indicies (from both tables) to check in nested for loop for joining
+        for index, attr in enumerate(tblData1[0].split("|")):
+            if operand1 in attr:
+                tblOneIndex = index
+
+        for index, attr in enumerate(tblData2[0].split("|")):
+            if operand2 in attr:
+                tblTwoIndex = index
+
+        for i in range(1, len(tblData1)):
+            for j in range(1, len(tblData2)):
+                if operator == '=' and tblData1[i].split("|")[tblOneIndex] == tblData2[j].split("|")[tblTwoIndex]:
+                    print(tblData1[i].replace('\n', '') + "|" + tblData2[j].replace('\n', ''))
+                else:
+                    print(tblData1[i].replace('\n', '') + "|" + "|")
+
+        file1.close()
+        file2.close()
+
+
 def main(): 
     try:
         running, dbToUse = True, ''
@@ -364,10 +480,6 @@ def main():
 
             elif upperInput == 'EXIT' or upperInput == '.EXIT\r' or upperInput == '.EXIT':
                 running = False
-
-            #elif not upperInput.startswith('UPDATE') and not upperInput.startswith('DELETE FROM'):
-                #print("Error: invalid input (and no semi-colon at end of input).")
-                #continue
 
             elif upperInput.startswith('CREATE DATABASE') and len(listInput) == 3:
                 createDatabase(listInput[2].replace(';', '').replace('\r', ''), cwd)
@@ -456,8 +568,14 @@ def main():
                             lineInfo += ' ' + line
                             whereStr = line
                             break
-                    selectTableWithAttributes(lineInfo.split(" "), whereStr, os.path.join(cwd, dbToUse))  
-                          
+
+                    if len(listInput) == 3 and 'left outer join' in lineInfo:
+                        leftOuterJoin(lineInfo.split(" "), whereStr.split(" "), os.path.join(cwd, dbToUse))
+                    elif len(listInput) == 3:
+                        queryAndJoinTables(lineInfo.split(" "), whereStr.split(" "), os.path.join(cwd, dbToUse))
+                    else:
+                        selectTableWithAttributes(lineInfo.split(" "), whereStr.split(" "), os.path.join(cwd, dbToUse))  
+                    
             else:
                 print("Error: invalid input.")
                 print(userInput)

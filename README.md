@@ -164,3 +164,7 @@ All the functionalities are designed around the use of a multitude of file IO op
 The update table functionality operates using a couple helper functions that work to process file data read in and split those values up to make comparisons based on given operations.  The processFileData helper function is called to do this work and returns a list of formatted lines with updates where needed to the updateData function.  To complete the modification operation, the list of lines returned from processFileData is written to the table which reflects all the correct modifications.  
 
 Finally, the query operation was updated so that specified attribute columns can be displayed and only data that falls within the given parameters of the command are displayed to the user.  This is done through reading in file data and looping through the parsed values to check if it qualifies under the given query.  If it does, it is printed otherwise it is not.  To conclude, all of these functionalities are implemented with further in line comments describing the sections with more complex code which will show in-depth the specifics of my corresponding functions.
+
+---
+## How inner join and left outer join are implemented
+
