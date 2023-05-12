@@ -164,9 +164,19 @@ def insertData(data: list, cwd: str):
     if not os.path.exists(tblPath):
         print(Fore.RED + "!Failed " + Style.RESET_ALL + "to insert data because table" + tblName + "does not exist.")
     else:
-        dataStr = ''
-        for i in range(3, len(data)):
-            dataStr += data[i].replace('values(', '').replace(',', '|').replace(');', '').replace('\t', '').replace('\'', '')
+        parsedData = []
+        for x in data:
+            parsedData.append(x)
+            if x.endswith(';'):
+                break
+        print(parsedData)
+        dataStr, start = '', 3
+
+        if len(parsedData) % 2 != 0:
+            start = 4
+
+        for i in range(start, len(parsedData)):
+            dataStr += parsedData[i].replace('values(', '').replace(',', '|').replace(');', '').replace('\t', '').replace('\'', '').replace('(', '')
 
         with open(tblPath, 'a+') as fp:
             dataInFile = fp.read()
@@ -582,6 +592,9 @@ def main():
                         queryAndJoinTables(lineInfo.split(" "), whereStr.split(" "), os.path.join(cwd, dbToUse))
                     else:
                         selectTableWithAttributes(lineInfo.split(" "), whereStr.split(" "), os.path.join(cwd, dbToUse))  
+
+            elif upperInput == 'BEGIN TRANSACTION;':
+                pass
                     
             else:
                 print("Error: invalid input.")

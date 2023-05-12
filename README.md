@@ -169,3 +169,7 @@ The table join functionality is split up between a couple functions that are use
 Further, the function continues on to a nested for loop which essentially compares all tuples in first designated table to all other tuples in second designated table.  If they are equal corresponding to the operator then the join of the tables is done and printed.  For left outer join, the implemented functionality differs through further checks done in the nested for loop that is comparing the attribute fields specified.  A left outer join, joins based on the comparison given if they fields are equal.  However, the fields of table 1 are printed with null values (or empty string) if none are equal because a left outer join is meant to join onto left table (aka first table in our implementation)
 
 Overall, nested for loops coupled with File IO are used to implement the comparisons for both inner joins and left outer joins similar to SQL.
+
+---
+## How transactions are implemented
+
