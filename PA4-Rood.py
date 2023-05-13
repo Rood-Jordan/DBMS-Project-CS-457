@@ -490,9 +490,21 @@ def leftOuterJoin(input: list, whereLst: list, cwd: str):
         file2.close()
 
 
-def transactionManaging():
+def transactionManaging(cwd: str):
 
-    print("Transaction starts.")
+    tableLst = os.listdir(cwd)
+    print(tableLst)
+    for file in tableLst:
+        lockTablePath = os.path.join(cwd, file + '_lock.txt')
+        print(lockTablePath)
+        if os.path.exists(lockTablePath):
+            pass
+        else:
+            with open(lockTablePath, 'w') as fp:
+
+                pass
+            fp.close()
+        print("Transaction starts.")
 
 
 def main(): 
@@ -610,7 +622,10 @@ def main():
                         selectTableWithAttributes(lineInfo.split(" "), whereStr.split(" "), os.path.join(cwd, dbToUse))  
 
             elif upperInput == 'BEGIN TRANSACTION;':
-                transactionManaging()
+                if dbToUse == '':
+                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to begin transaction because no database is in use.")
+                else:                
+                    transactionManaging(os.path.join(cwd, dbToUse))
                     
             else:
                 print("Error: invalid input.")
