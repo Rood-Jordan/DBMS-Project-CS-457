@@ -139,10 +139,10 @@ def alterTable(input: list, cwd: str):
         attributeStr = ''
 
         for i in range(4, len(input), 2):
-            attributeStr += ' | ' + input[i] + ' ' + input[i + 1].replace(';', '')
+            attributeStr += '|' + input[i] + ' ' + input[i + 1].replace(';', '')
 
             if i == len(input):
-                attributeStr += ' | '
+                attributeStr += '|'
 
         if input[3] == 'ADD':
             with open(tablePath, 'a') as fp:
@@ -166,17 +166,20 @@ def insertData(data: list, cwd: str):
     else:
         parsedData = []
         for x in data:
-            parsedData.append(x)
+            parsedData.append(x.split('\t'))
             if x.endswith(';'):
                 break
-        print(parsedData)
+        #print(parsedData)
         dataStr, start = '', 3
 
-        if len(parsedData) % 2 != 0:
+        flatParsedData = [elem for sublist in parsedData for elem in sublist]
+        flatParsedData = [elem for elem in flatParsedData if elem != '']
+        
+        if len(flatParsedData) % 2 != 0:
             start = 4
 
-        for i in range(start, len(parsedData)):
-            dataStr += parsedData[i].replace('values(', '').replace(',', '|').replace(');', '').replace('\t', '').replace('\'', '').replace('(', '')
+        for i in range(start, len(flatParsedData)):
+            dataStr += flatParsedData[i].replace('values(', '').replace(',', '|').replace(');', '').replace('\t', '').replace('\'', '').replace('(', '')
 
         with open(tblPath, 'a+') as fp:
             dataInFile = fp.read()
@@ -197,13 +200,17 @@ def processFileData(data: list, setAttr: str, whereAttr: str, dataToFind: str, d
     # through updating a list to return to update function 
 
     splitLines = splitFileData(data)
-    
+    #print(splitLines)
+
     indexToReplaceAt, colToSetAt, recordsModified = 0, 0, 0
     for index, dataType in enumerate(splitLines[0]):
+        #print(index, dataType)
         if whereAttr in dataType:
             indexToReplaceAt = index
         elif setAttr in dataType:
             colToSetAt = index
+
+    #print(splitLines)
 
     for i in range(1, len(splitLines)):
         if splitLines[i][indexToReplaceAt] == dataToFind:
@@ -226,8 +233,9 @@ def updateData(tblName: str, modifyInfoLst: list, cwd: str):
     # then list is returned from helper function to then be written back to the table file line by line
 
     tblPath = os.path.join(cwd, tblName)
+    #print(modifyInfoLst)
 
-    if len(modifyInfoLst) >= 9 and 'set' in modifyInfoLst and 'where' in modifyInfoLst:
+    if len(modifyInfoLst) >= 8 and 'set' in modifyInfoLst and 'where' in modifyInfoLst:
         inputList = [elem for elem in modifyInfoLst if elem != '']
         parsedInput = [i for i in inputList if i != '\r']
 
@@ -236,7 +244,7 @@ def updateData(tblName: str, modifyInfoLst: list, cwd: str):
 
         dataToFind = parsedInput[7].replace(';', '').replace('\'', '').replace('\r', '')
         dataToSet = parsedInput[3].replace('\'', '')
-        #print(dataToFind, dataToSet)
+        #print('data to find is ' + dataToFind, 'data to set is ' + dataToSet)
 
         fp = open(tblPath, 'r')
         fileData = fp.readlines()
@@ -382,6 +390,7 @@ def fromParser(input:list):
             fromList.append(x.replace(',', ''))
     return fromList
 
+
 def queryAndJoinTables(input: list, whereList: list, cwd: str):
     # this function uses helper fromParser function to parse input command data
     # then uses this to find two tables to join or inner join.  Table files are opened
@@ -481,6 +490,11 @@ def leftOuterJoin(input: list, whereLst: list, cwd: str):
         file2.close()
 
 
+def transactionManaging():
+
+    print("Transaction starts.")
+
+
 def main(): 
     try:
         running, dbToUse = True, ''
@@ -537,10 +551,12 @@ def main():
                 else:
                     insertData(listInput, os.path.join(cwd, dbToUse.replace('\r', '')))
 
-            elif upperInput.startswith('UPDATE') and len(listInput) >= 2 and len(listInput) < 4:
+            elif upperInput.startswith('UPDATE') and (len(listInput) >= 2 and len(listInput) < 4 or len(listInput) == 10):
                 if dbToUse == '':
                     print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data in " + listInput[1] + " because no database is being used.")
-                else:
+                elif len(listInput) == 10 and upperInput.endswith(';'):
+                    updateData(listInput[1], listInput[2:], os.path.join(cwd, dbToUse))
+                else:   
                     updateLineInfo, counter = '', 0
                     while True or counter <= 3:
                         line = input()
@@ -594,7 +610,7 @@ def main():
                         selectTableWithAttributes(lineInfo.split(" "), whereStr.split(" "), os.path.join(cwd, dbToUse))  
 
             elif upperInput == 'BEGIN TRANSACTION;':
-                pass
+                transactionManaging()
                     
             else:
                 print("Error: invalid input.")
