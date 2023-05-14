@@ -1,4 +1,4 @@
-# PA3-CS-457 METADATA MANAGEMENT SYSTEM, Basic Data Manipulation, and Table Joins
+# PA4-CS-457 Metadata management system, Basic Data Manipulation, Table Joins, and TRANSACTIONS
 
 ## Student Name: Jordan Rood
 ---
@@ -8,7 +8,7 @@ Metadata meaning the database's high-level info (db's name, creation date/time, 
 
 Furthermore, this program allows insertion, deletion, and modification to tuples within tables.  Extension has also been made to the select command where basic select commands with attribute title specification and basic query operations on data withing tables.
 
-Table joins functionality is also implemented with differing syntactical commands for specific joins such as inner join or left outer join.
+Table joins functionality are also implemented with differing syntactical commands for specific joins such as inner join or left outer join.  Finally, transactions are also implemented to uphold atomicity characteristics between simultaneous processes.
 
 **Data is persistent (e.g., stored on hard drive) through use of relative path functionality.**
 
@@ -25,6 +25,8 @@ Table joins functionality is also implemented with differing syntactical command
 - **Tuple deletion** by reading table data from file, parsing out/removing the given matching arguments, and writing remaining data back to table file.
 
 - **Table joins** to join two tables within a database based on input criteria/commands.  Specific functionality supports inner joins and left outer joins.
+
+- **Tranactions** have a start and a commit so that only one process can only access the database or table they are updating and/or using if they were first to begin a transaction with it.  This also means if a process is already using a table, then it is locked so any commands used on that table by another process will fail.  Any commits will abort as well if made by a process that does not have possession of the lock.
 
 ---
 ## Requirements
@@ -43,92 +45,97 @@ Table joins functionality is also implemented with differing syntactical command
 - INSERT DATA: adds data into specified table relating to metadata input from creation of that table prior.
 - UPDATE DATA: modifies data in table based on specifications given (e.g., changing price where name is 'Gizmo' at every occurrence within a table).
 - REMOVE DATA: deletes data from table based on given bounds or parameters.
-- INNER JOIN TABLES - two basic syntax to compare attribute fields in two tables and join them together if equal comparison.
-- LEFT OUTER JOIN TABLES - similar to inner join with comparision between table fields but joins onto the first table input by user.
+- INNER JOIN TABLES: two basic syntax to compare attribute fields in two tables and join them together if equal comparison.
+- LEFT OUTER JOIN TABLES: similar to inner join with comparision between table fields but joins onto the first table input by user.
+- BEGIN TRANSACTION: starts a transaction successfully despite if another transaction has started and not been committed previously
+- COMMIT TRANSACTION: this command commits a transaction if the process committing is the one with possession of the lock (e.g., the process that started the first uncommitted transaction).  All other commits abort if table is locked by another process.
 
 ---
 ## Sample Execution, Output, and Usage Examples
 
 **Expected output that matches following testscript provided**
 
-Program can be ran by file input or by inputing all commands individually on command line; this will obtain same expected output. 
+Program can be ran by file input (for test scripts 1 through 3) or by inputing all commands individually on command line; this will obtain same expected output. 
 
-To run program by file or script input:
+To run program by file or script (which can only be done for test scripts 1-3) input this command into the terminal:
 ```
-$ python PA3-Rood.py < PA3_test.sql
+$ python PA4-Rood.py < PA3_test.sql
 ```
 
 To run program and input commands individually simply run the python program:
 
 ```
-$ python PA3-Rood.py
+$ python PA4-Rood.py
 ```
 and input commands and arguments:
 ```
 COMMANDS <arguments>;
 ```
 
+* NOTE - PA4 test script commands NEED to be put in individually as some commands are input into one terminal and some in another (in a specific order).
+
 Additional example input and output is as follows:
 ```
---CS457 PA3
+-- CS 457/657 PA4
 
---Construct the database and table (0 points; expected to work from PA1)
-CREATE DATABASE CS457_PA3;
-USE CS457_PA3;
-create table Employee(id int, name varchar(10));
-create table Sales(employeeID int, productID int);
+-- This script includes the commands to be executed by two processes (or terminals), P1 and P2
 
---Insert new data (0 points; expected to work from PA2)
-insert into Employee values(1,'Joe');
-insert into Employee values(2,'Jack');
-insert into Employee values(3,'Gill');
-insert into Sales values(1,344);
-insert into Sales values(1,355);
-insert into Sales values(2,544);
+-- On P1:
+CREATE DATABASE CS457_PA4;
+USE CS457_PA4;
+create table Flights (seat int, status int);
+insert into Flights values (22,0); -- seat 22 is available
+insert into Flights values (23,1); -- seat 23 is occupied
+begin transaction;
+update flights set status = 1 where seat = 22;
 
--- The following will miss Gill (2 points)
-select * 
-from Employee E, Sales S 
-where E.id = S.employeeID;
+-- On P2:
+USE CS457_PA4;
+select * from Flights;
+begin transaction;
+update flights set status = 1 where seat = 22;
+commit; --there should be nothing to commit; it's an "abort"
+select * from Flights;
 
--- This is the same as above but with a different syntax (3 points)
-select * 
-from Employee E inner join Sales S 
-on E.id = S.employeeID;
+-- On P1:
+commit; --persist the change to disk
+select * from Flights;
 
--- The following will include Gill (5 points)
-select * 
-from Employee E left outer join Sales S 
-on E.id = S.employeeID;
+-- On P2:
+select * from Flights;
 
-.exit
+---------------------
+-- Expected output --
+---------------------
 
--- Expected output
---
--- Database CS457_PA3 created.
--- Using database CS457_PA3.
--- Table Employee created.
--- Table Sales created.
+-- On P1:
+-- Database CS457_PA4 created.
+-- Using database CS457_PA4.
+-- Table Flights created.
 -- 1 new record inserted.
 -- 1 new record inserted.
--- 1 new record inserted.
--- 1 new record inserted.
--- 1 new record inserted.
--- 1 new record inserted.
--- id int|name varchar(10)|employeeID int|productID int
--- 1|Joe|1|344
--- 1|Joe|1|355
--- 2|Jack|2|544
--- id int|name varchar(10)|employeeID int|productID int
--- 1|Joe|1|344
--- 1|Joe|1|355
--- 2|Jack|2|544
--- id int|name varchar(10)|employeeID int|productID int
--- 1|Joe|1|344
--- 1|Joe|1|355
--- 2|Jack|2|544
--- 3|Gill||
--- All done.
+-- Transaction starts.
+-- 1 record modified.
+-- Transaction committed.
+-- seat int|status int
+-- 22|1
+-- 23|1
+
+
+-- On P2:
+-- Using database CS457_PA4.
+-- seat int|status int
+-- 22|0
+-- 23|1
+-- Transaction starts.
+-- Error: Table Flights is locked!
+-- Transaction abort.
+-- seat int|status int
+-- 22|0
+-- 23|1
+-- seat int|status int
+-- 22|1
+-- 23|1
 ```
 ---
 
@@ -173,3 +180,14 @@ Overall, nested for loops coupled with File IO are used to implement the compari
 ---
 ## How transactions are implemented
 
+Transactions are implemented through use of a couple helper functions as well as some needed modifications to other table and database manipulation functions.  
+
+First, a transaction must be started; the first process to begin a transaction then creates a lock for the file it is working with.  In my design, I thought the best way to keep order in the original state of the file before a commit would be to read the contents of the file at the start of the transaction and copy it over into the empty <tblName>_lock file.  This way if the transaction data is uncommitted, the original data is still accessible by certain processes when needed.
+
+Other processes can start transactions successfully, but cannot access the table to make any updates unless the process trying to do so is the one in possession of the lock.  This is simply checked by checking the current directory for a respective lock table.  If there is a lock file and the process is not the one with access to the lock, then it cannot access the table and an error message is output to the terminal.  
+
+The processes each have a state variable that is used throughout the transaction(s) functions to help with the logic as to whether or not that process can update changes to the table and/or commit its transaction successfully.  
+
+Overall, the creation of a lock file and keeping a boolean state variable up to date throughout commands in a process is what helps to decide whether or not a process can commit and have access to a table.  
+
+Upon a commit, if the process lock variable is true then that commit will be successful and the original data within the locked file will be deleted.  The lock boolean will be reset to false upon completion of this command as well.  If the process is the one locked out (e.g., the status variable will be false because it does not possess the lock), the commit will automatically abort and send the appropriate abort message to the terminal.  This functionality is what showcases atomicity between simultaneously running processes.

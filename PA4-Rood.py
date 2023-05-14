@@ -1,7 +1,7 @@
 # Author: Jordan Rood 
 # CS 457 : DATABASE MANAGEMENT SYSTEMS
-# Programming Assignment 3 - Table Joins: built off previous assignment(s) Basic Data Manipulation and Metadata Management System
-# Date: 04-10-2023
+# Programming Assignment 4 - Transactions: built off previous assignment(s) Basic Data Manipulation, Metadata Management System, and Table Joins
+# Date: 05-04-2023
 
 import os, sys
 import shutil
@@ -109,14 +109,20 @@ def dropTable(tableName: str, cwd: str):
         print("Table " + tableName + " deleted.")
 
 
-def selectTable(tableName: str, cwd: str):
-    # uses fileIO to read attribute fields from table file and output them
+def selectTable(tableName: str, cwd: str, thisProcessLocked: bool):
+    # uses fileIO to read attribute fields from designated table file and output 
+    # also has lock file checks to determins if process has lock and which file has the
+    # current data.
 
     tablePath = os.path.join(cwd, tableName)
 
     if not os.path.exists(tablePath):
         print(Fore.RED + "!Failed " + Style.RESET_ALL + "to query table " + tableName + " because it does not exist.")
     else:
+        lockFile = tablePath + '_lock'
+        if os.path.exists(lockFile) and not thisProcessLocked:
+            tablePath = lockFile
+
         with open(tablePath, 'r') as fp:
             contents = fp.readlines()
             pass
@@ -200,7 +206,7 @@ def processFileData(data: list, setAttr: str, whereAttr: str, dataToFind: str, d
     # through updating a list to return to update function 
 
     splitLines = splitFileData(data)
-    #print(splitLines)
+    #print("split lines in process ", splitLines)
 
     indexToReplaceAt, colToSetAt, recordsModified = 0, 0, 0
     for index, dataType in enumerate(splitLines[0]):
@@ -228,14 +234,25 @@ def processFileData(data: list, setAttr: str, whereAttr: str, dataToFind: str, d
     return ['|'.join(x) for x in splitLines]
 
 
-def updateData(tblName: str, modifyInfoLst: list, cwd: str):
+def updateData(tblName: str, modifyInfoLst: list, cwd: str, thisProcessUsingLock):
     # takes in update parameters from user and validates and parses it to send to helper function for updates
     # then list is returned from helper function to then be written back to the table file line by line
+    # updates are done only if the process requesting has the lock
 
     tblPath = os.path.join(cwd, tblName)
-    #print(modifyInfoLst)
 
-    if len(modifyInfoLst) >= 8 and 'set' in modifyInfoLst and 'where' in modifyInfoLst:
+    if not os.path.exists(tblPath):
+        tblPath = os.path.join(cwd, tblName.capitalize())
+        tblName = tblName.capitalize()
+    #print(modifyInfoLst)
+    #print(tblPath)
+
+    # checks for a lock file and status and if exist and not process that is  
+    # using lock, should not be able to update
+    if os.path.exists(tblPath + '_lock') and not thisProcessUsingLock:
+        print("Error: Table " + tblName + " is locked!")
+
+    elif len(modifyInfoLst) >= 8 and 'set' in modifyInfoLst and 'where' in modifyInfoLst:
         inputList = [elem for elem in modifyInfoLst if elem != '']
         parsedInput = [i for i in inputList if i != '\r']
 
@@ -490,26 +507,67 @@ def leftOuterJoin(input: list, whereLst: list, cwd: str):
         file2.close()
 
 
-def transactionManaging(cwd: str):
+def transactionManaging(cwd: str, processLocked: bool):
+    # This function begins a transaction by reading transaction file contents and writing the state before 
+    # the transaction began to a <tblName>_lock file.  This lock file is what keeps state as well as 
+    # makes it so no other operation in another process can access the original table while the first transacaction
+    # is not committed.  This is what keeps atomicity between processes.
 
     tableLst = os.listdir(cwd)
-    print(tableLst)
+    
     for file in tableLst:
-        lockTablePath = os.path.join(cwd, file + '_lock.txt')
-        print(lockTablePath)
-        if os.path.exists(lockTablePath):
-            pass
-        else:
-            with open(lockTablePath, 'w') as fp:
+        lockTablePath = os.path.join(cwd, file + '_lock')
+        tblPath = os.path.join(cwd, file)
+        #print(lockTablePath)
 
+        if os.path.exists(lockTablePath) or '_lock' in file:
+            break
+        else:
+            # open and read contents from table starting transaction with
+            with open(tblPath, 'r') as fp:
+                contents = fp.readlines()
+                pass
+
+            # write the contents of transaction file to lock file to keep state of table before transaction started
+            with open(lockTablePath, 'w') as fp:
+                fp.write(''.join(contents))
                 pass
             fp.close()
-        print("Transaction starts.")
+            processLocked = True
+
+    print("Transaction starts.")
+    return processLocked
+
+
+def commit(cwd: str, processUsingLock: bool):
+    # this function handles transaction committs through use of a process 
+    # status variable and os path functionality to commit changes and remove
+    # the lock file.
+
+    if not processUsingLock:
+        print("Transaction abort.")
+    else:
+        # process using lock and needs to be committed
+        # so delete lock file and set lock status to false
+        # loops through db directory in case of multiple table
+        tableLst = os.listdir(cwd)
+
+        for tableName in tableLst:
+            if os.path.exists(os.path.join(cwd, tableName + '_lock')):
+                os.remove(os.path.join(cwd, tableName + '_lock'))
+
+                print("Transaction committed.")
+                processUsingLock = False
+
+    return processUsingLock
 
 
 def main(): 
+    # main function which takes in input from command line and matches it with the corresponding function(s)
+    # also multiple validity checks here and in additional functions used above
+
     try:
-        running, dbToUse = True, ''
+        running, dbToUse, processLocked = True, '', False
         cwd = os.getcwd()
 
         while running:
@@ -549,7 +607,7 @@ def main():
                 if dbToUse == '':
                     print(Fore.RED + "!Failed " + Style.RESET_ALL + "to query table " + listInput[3].replace(';', '').replace('\r', '') + " because no database is being used.")
                 else:
-                    selectTable(listInput[3].replace (';', '').replace('\r', ''), os.path.join(cwd, dbToUse))
+                    selectTable(listInput[3].replace (';', '').replace('\r', ''), os.path.join(cwd, dbToUse), processLocked)
 
             elif upperInput.startswith('ALTER TABLE') and 'ADD' in upperInput and len(listInput) == 6:
                 if dbToUse == '':
@@ -567,7 +625,7 @@ def main():
                 if dbToUse == '':
                     print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data in " + listInput[1] + " because no database is being used.")
                 elif len(listInput) == 10 and upperInput.endswith(';'):
-                    updateData(listInput[1], listInput[2:], os.path.join(cwd, dbToUse))
+                    updateData(listInput[1], listInput[2:], os.path.join(cwd, dbToUse), processLocked)
                 else:   
                     updateLineInfo, counter = '', 0
                     while True or counter <= 3:
@@ -580,7 +638,7 @@ def main():
                             break
 
                     if len(updateLineInfo.split(" ")) >= 9 and len(updateLineInfo.split(" ")) < 11:
-                        updateData(listInput[1], updateLineInfo.split(" "), os.path.join(cwd, dbToUse))
+                        updateData(listInput[1], updateLineInfo.split(" "), os.path.join(cwd, dbToUse), processLocked)
                     else:
                         print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data due to invalid number of commands.")
 
@@ -625,8 +683,14 @@ def main():
                 if dbToUse == '':
                     print(Fore.RED + "!Failed " + Style.RESET_ALL + "to begin transaction because no database is in use.")
                 else:                
-                    transactionManaging(os.path.join(cwd, dbToUse))
-                    
+                    processLocked = transactionManaging(os.path.join(cwd, dbToUse), processLocked)
+            
+            elif upperInput.startswith('COMMIT;'):
+                if dbToUse == '':
+                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to begin transaction because no database is in use.")
+                else:
+                    processLocked = commit(os.path.join(cwd, dbToUse), processLocked)
+
             else:
                 print("Error: invalid input.")
                 print(userInput)
