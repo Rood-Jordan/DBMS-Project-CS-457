@@ -180,9 +180,9 @@ Overall, nested for loops coupled with File IO are used to implement the compari
 ---
 ## How transactions are implemented
 
-Transactions are implemented through use of a couple helper functions as well as some needed modifications to other table and database manipulation functions.  
+Transactions are implemented through use of a couple helper functions as well as some needed modifications to other table and database manipulation functions using a passed around lock variable to indicate what process has access to the locked table from a transaction.  
 
-First, a transaction must be started; the first process to begin a transaction then creates a lock for the file it is working with.  In my design, I thought the best way to keep order in the original state of the file before a commit would be to read the contents of the file at the start of the transaction and copy it over into the empty <tblName>_lock file.  This way if the transaction data is uncommitted, the original data is still accessible by certain processes when needed.
+First, a transaction must be started; the first process to begin a transaction then creates a lock for the file it is accessing.  In my design, I thought the best way to keep order in the original state of the file before a commit would be to read the contents of the file at the start of the transaction and copy it over into the empty <tblName>_lock file.  This way if the transaction data is uncommitted, the original data is still accessible by certain processes when needed.  The lock file also indicates to other processes that another process is accessing it; therefore, it has "locked" other processes out.
 
 Other processes can start transactions successfully, but cannot access the table to make any updates unless the process trying to do so is the one in possession of the lock.  This is simply checked by checking the current directory for a respective lock table.  If there is a lock file and the process is not the one with access to the lock, then it cannot access the table and an error message is output to the terminal.  
 
