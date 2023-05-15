@@ -120,7 +120,7 @@ def selectTable(tableName: str, cwd: str, thisProcessLocked: bool):
         print(Fore.RED + "!Failed " + Style.RESET_ALL + "to query table " + tableName + " because it does not exist.")
     else:
         lockFile = tablePath + '_lock'
-        if os.path.exists(lockFile) and not thisProcessLocked:
+        if os.path.exists(lockFile): #and not thisProcessLocked:
             tablePath = lockFile
 
         with open(tablePath, 'r') as fp:
@@ -562,6 +562,25 @@ def commit(cwd: str, processUsingLock: bool):
     return processUsingLock
 
 
+def processUncommittedHandler(cwd: str):
+    # checks if a lock file exists because if it does that means the process with access to the lock 
+    # did not commit, so then the status in the lock needs to be written back to what it was before 
+    tables = os.listdir(cwd)
+    for tbl in tables:
+        tblPath = os.path.join(cwd, tbl)
+        if os.path.exists(tblPath + '_lock'):
+            #os.remove(os.path.join(cwd, dbToUse, tbl))
+            #os.rename(os.path.join(cwd, dbToUse, tbl + '_lock'), os.path.join(cwd, dbToUse, tbl))
+            with open(tblPath + '_lock', 'r') as fp:
+                originalContents = fp.readlines()
+                pass
+            fp.close()
+            with open(tblPath, 'w') as file:
+                file.write(''.join(originalContents))
+                pass
+            file.close()
+            os.remove(tblPath + '_lock')
+
 def main(): 
     # main function which takes in input from command line and matches it with the corresponding function(s)
     # also multiple validity checks here and in additional functions used above
@@ -695,8 +714,10 @@ def main():
                 print("Error: invalid input.")
                 print(userInput)
                 continue
-    
+        
+        processUncommittedHandler(os.path.join(cwd, dbToUse))
         print("All done.")
+
     except KeyboardInterrupt:
         print(" You cancelled the operation.")
     except:
