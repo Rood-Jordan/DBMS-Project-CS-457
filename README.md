@@ -1,4 +1,4 @@
-# PA4-CS-457 Metadata management system, Basic Data Manipulation, Table Joins, and TRANSACTIONS
+# PA5-CS-457 Metadata management system, Basic Data Manipulation, Table Joins, Transactions, and AGGREGATIONS (COUNT, MAX, AVG)
 
 ## Student Name: Jordan Rood
 ---
@@ -59,13 +59,13 @@ Program can be ran by file input (for test scripts 1 through 3) or by inputing a
 
 To run program by file or script (which can only be done for test scripts 1-3) input this command into the terminal:
 ```
-$ python PA4-Rood.py < PA3_test.sql
+$ python PA5-Rood.py < PA5_test.sql
 ```
 
 To run program and input commands individually simply run the python program:
 
 ```
-$ python PA4-Rood.py
+$ python PA5-Rood.py
 ```
 and input commands and arguments:
 ```
@@ -76,66 +76,68 @@ COMMANDS <arguments>;
 
 Additional example input and output is as follows:
 ```
--- CS 457/657 PA4
+-- CS457 PA5
+-- 
+-- This is an bonus assignment. It is NOT required.
+-- It will be counted as five (5) points; thus, the overall possible points you can get are 105.
+--
+-- Grading: 1 point for design document, 1 point for coding style, and 3 points for three aggregate queries (i.e., COUNT, AVG, and MAX).
 
--- This script includes the commands to be executed by two processes (or terminals), P1 and P2
+CREATE DATABASE db_tpch;
+USE db_tpch;
 
--- On P1:
-CREATE DATABASE CS457_PA4;
-USE CS457_PA4;
-create table Flights (seat int, status int);
-insert into Flights values (22,0); -- seat 22 is available
-insert into Flights values (23,1); -- seat 23 is occupied
-begin transaction;
-update flights set status = 1 where seat = 22;
+CREATE TABLE Part (Partkey int, Size int);
 
--- On P2:
-USE CS457_PA4;
-select * from Flights;
-begin transaction;
-update flights set status = 1 where seat = 22;
-commit; --there should be nothing to commit; it's an "abort"
-select * from Flights;
+INSERT INTO Part VALUES (1, 7);
+INSERT INTO Part VALUES (2, 1);
+INSERT INTO Part VALUES (3, 21);
+INSERT INTO Part VALUES (4, 14);
+INSERT INTO Part VALUES (5, 15);
+INSERT INTO Part VALUES (6, 4);
+INSERT INTO Part VALUES (7, 45);
+INSERT INTO Part VALUES (8, 41);
+INSERT INTO Part VALUES (9, 12);
+INSERT INTO Part VALUES (10, 44);
 
--- On P1:
-commit; --persist the change to disk
-select * from Flights;
+SELECT 	COUNT(*)
+FROM	Part;
 
--- On P2:
-select * from Flights;
+SELECT 	AVG(Size)
+FROM	Part;
 
----------------------
--- Expected output --
----------------------
+SELECT 	MAX(Size)
+FROM	Part;
 
--- On P1:
--- Database CS457_PA4 created.
--- Using database CS457_PA4.
--- Table Flights created.
+.EXIT
+
+-- Expected output
+--
+-- Database db_tpch created.
+-- Using database db_tpch.
+--
+-- Table Part created.
+--
 -- 1 new record inserted.
 -- 1 new record inserted.
--- Transaction starts.
--- 1 record modified.
--- Transaction committed.
--- seat int|status int
--- 22|1
--- 23|1
-
-
--- On P2:
--- Using database CS457_PA4.
--- seat int|status int
--- 22|0
--- 23|1
--- Transaction starts.
--- Error: Table Flights is locked!
--- Transaction abort.
--- seat int|status int
--- 22|0
--- 23|1
--- seat int|status int
--- 22|1
--- 23|1
+-- 1 new record inserted.
+-- 1 new record inserted.
+-- 1 new record inserted.
+-- 1 new record inserted.
+-- 1 new record inserted.
+-- 1 new record inserted.
+-- 1 new record inserted.
+-- 1 new record inserted.
+--
+-- COUNT(*)
+-- 10
+--
+-- AVG(Size)
+-- 20.4
+--
+-- MAX(Size)
+-- 45
+--
+-- All done.
 ```
 ---
 
@@ -191,3 +193,18 @@ The processes each have a state variable that is used throughout the transaction
 Overall, the creation of a lock file and keeping a boolean state variable up to date throughout commands in a process is what helps to decide whether or not a process can commit and have access to a table.  
 
 Upon a commit, if the process lock variable is true then that commit will be successful and the original data within the locked file will be deleted.  The lock boolean will be reset to false upon completion of this command as well.  If the process is the one locked out (e.g., the status variable will be false because it does not possess the lock), the commit will automatically abort and send the appropriate abort message to the terminal.  To note, no updates will persist without a commit and that is due to an additional function that is called upon exiting the program.  This function checks if a <tblName>_lock file exists and if one does, that means that a commit for the process with access to the lock was not made.  Then, the original contents before the transaction is made sure to be in the file through help of the lock file.  Then to finish the lock file is deleted.  Finally, the mentioned functionality is what showcases atomicity between simultaneously running processes. 
+
+---
+## How count aggregation is implemented
+
+This functionality works by opening a stream to the designated table file and using readlines().  The readlines function gets each line and stores it in a list.  Therefore, the number of records is the length of the list subtracted by one (due to the first line of attribute names).  This is what finds the total number of tuples within the specified table.
+
+---
+## How avg aggregation is implemented
+
+This functionality is implemented where the attribute name is searched for to find the right column within the tuples to look in.  The file contents are then iterated through at the found index to check and each are added to a sum variable to have the total after the loop.  Then, finally to find the average the sum is divided by the length of the data (minus the metadata line) which is the total number of records in the table.  This then outputs the average of the attribute specified from the table input.
+
+---
+## How max aggregation is implemented
+
+The max is found similar to the average functionality.  However, after finding the index to check instead of taking the sum each iteration, a comparison is taken to find the greater of the two numbers.  A maximum variable is kept track of throughout to ultimately output the max value found from the attribute within the table desired.

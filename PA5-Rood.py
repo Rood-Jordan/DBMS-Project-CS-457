@@ -180,12 +180,12 @@ def insertData(data: list, cwd: str):
 
         flatParsedData = [elem for sublist in parsedData for elem in sublist]
         flatParsedData = [elem for elem in flatParsedData if elem != '']
-        
+
         if len(flatParsedData) % 2 != 0:
             start = 4
 
         for i in range(start, len(flatParsedData)):
-            dataStr += flatParsedData[i].replace('values(', '').replace(',', '|').replace(');', '').replace('\t', '').replace('\'', '').replace('(', '')
+            dataStr += flatParsedData[i].replace('values(', '').replace('VALUES', '').replace(',', '|').replace(');', '').replace('\t', '').replace('\'', '').replace('(', '')
 
         with open(tblPath, 'a+') as fp:
             dataInFile = fp.read()
@@ -562,6 +562,80 @@ def commit(cwd: str, processUsingLock: bool):
     return processUsingLock
 
 
+def countTuples(cwd: str, tblName: str, attribute: str):
+    
+    tblPath = os.path.join(cwd, tblName)
+
+    if not os.path.exists(tblPath):
+        print(Fore.RED + "!Failed " + Style.RESET_ALL + "to count records in " + tblName + " table because it does not exist.")
+    else:
+        with open(tblPath, 'r') as fp:
+            data = fp.readlines()
+            pass
+
+        print(attribute.replace('\t', '').replace('\r', ''))
+        # lines of file minus the metadata line
+        print(len(data) - 1)
+
+
+def average(cwd: str, tblName: str, attribute: str):
+
+    tblPath = os.path.join(cwd, tblName)
+    attributeToFind = attribute.replace('AVG(', '').replace(')', '').replace('\t', '').replace('\r', '')
+
+    if not os.path.exists(tblPath):
+        print(Fore.RED + "!Failed " + Style.RESET_ALL + "to count records in " + tblName + " table because it does not exist.")
+    else:
+        with open(tblPath, 'r') as fp:
+            data = fp.readlines()
+            pass
+
+        attributeNames = data[0].split('|')
+        indexToAvg = 0
+        for index, attr in enumerate(attributeNames):
+            if attributeToFind in attr:
+                indexToAvg = index
+
+        sum = 0
+        for i in range(1, len(data)):
+            splitLines = data[i].split('|')
+            sum += float(splitLines[indexToAvg].replace('\n', ''))
+
+        avg = sum / (len(data) - 1)
+        
+        print(attribute.replace('\t', '').replace('\r', ''))
+        print(avg)
+
+
+def max(cwd: str, tblName: str, attribute: str):
+
+    tblPath = os.path.join(cwd, tblName)
+    attributeToFind = attribute.replace('MAX(', '').replace(')', '').replace('\t', '').replace('\r', '')
+
+    if not os.path.exists(tblPath):
+        print(Fore.RED + "!Failed " + Style.RESET_ALL + "to count records in " + tblName + " table because it does not exist.")
+    else:
+        maximum = 0
+
+        with open(tblPath, 'r') as fp:
+            data = fp.readlines()
+            pass
+
+        attributeNames = data[0].split('|')
+        indexToCheckMax = 0
+        for index, attr in enumerate(attributeNames):
+            if attributeToFind in attr:
+                indexToCheckMax = index
+
+        for i in range(1, len(data)):
+            splitLines = data[i].split('|')
+            if float(maximum) <= float(splitLines[indexToCheckMax].replace('\n', '')):
+                maximum = splitLines[indexToCheckMax]
+
+        print(attribute.replace('\t', '').replace('\r', ''))
+        print(maximum)
+
+
 def processUncommittedHandler(cwd: str):
     # checks if a lock file exists because if it does that means the process with access to the lock 
     # did not commit, so then the status in the lock needs to be written back to what it was before 
@@ -594,6 +668,7 @@ def main():
 
             upperInput = userInput.upper()
             listInput = userInput.split(" ")
+            #print(listInput)
             
             if userInput.startswith('--') or userInput == '' or userInput == '\r':
                 pass
@@ -709,6 +784,27 @@ def main():
                     print(Fore.RED + "!Failed " + Style.RESET_ALL + "to begin transaction because no database is in use.")
                 else:
                     processLocked = commit(os.path.join(cwd, dbToUse), processLocked)
+
+            elif 'SELECT' in listInput and '\tCOUNT(*)\r' in listInput:
+                if dbToUse == '':
+                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to count records because no database is in use.")
+                else:
+                    fromLine = input()
+                    countTuples(os.path.join(cwd, dbToUse), fromLine.split('\t')[1].replace(';', '').replace('\r', ''), listInput[1])
+
+            elif 'SELECT' in listInput and 'AVG' in upperInput:
+                if dbToUse == '':
+                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to find average of attribute because no database is in use.")
+                else:
+                    fromLine = input()
+                    average(os.path.join(cwd, dbToUse), fromLine.split('\t')[1].replace(';', '').replace('\r', ''), listInput[1])
+
+            elif 'SELECT' in listInput and 'MAX' in upperInput:
+                if dbToUse == '':
+                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to find max of attribute because no database is in use.")
+                else:
+                    fromLine = input()
+                    max(os.path.join(cwd, dbToUse), fromLine.split('\t')[1].replace(';', '').replace('\r', ''), listInput[1])
 
             else:
                 print("Error: invalid input.")
