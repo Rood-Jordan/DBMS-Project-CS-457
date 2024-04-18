@@ -404,10 +404,11 @@ class DBMS:
         # print("InfoLst - ", infoLst)
         # print("wherestmt - ", whereStmt)
 
-        tblName = infoLst[4].capitalize()
+        tblName = infoLst[4]
         tblPath = os.path.join(cwd, tblName)
         operator, operand = whereStmt[2], whereStmt[3].replace(';', '').replace('\r', '')
         boundArg = whereStmt[1]
+        print("HERE is TABLE PATH ", tblPath)
 
         if not os.path.exists(tblPath):
             # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to query table " + tblName + " because it does not exist.")

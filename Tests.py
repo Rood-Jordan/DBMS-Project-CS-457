@@ -90,6 +90,7 @@ class TestDbmsSimulator(unittest.TestCase):
 
     def testUpdateData_TableLocked(self):
         # create locked table to have Branch Coverage
+        os.mkdir(os.path.join(self.CWD, "TestDB", "TableName"))
         os.mkdir(os.path.join(self.CWD, "TestDB", "TableName_lock"))
 
         input = ['set', 'name', '=', 'changedName', 'where', 'name', '=', "'testName';"]
