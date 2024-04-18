@@ -29,7 +29,7 @@ class MainController:
                     running = False
 
                 elif upperInput.startswith('CREATE DATABASE') and len(listInput) == 3:
-                    result = dbms.createDatabase(listInput[2].replace(';', '').replace('\r', ''), cwd)
+                    dbms.createDatabase(listInput[2].replace(';', '').replace('\r', ''), cwd)
 
                 elif upperInput.startswith('DROP DATABASE') and len(listInput) == 3:
                     dbms.dropDatabase(listInput[2].replace(';', '').replace('\r', ''), cwd)
@@ -171,5 +171,5 @@ class MainController:
 
         except KeyboardInterrupt:
             print(" You cancelled the operation.")
-        except:
+        except Exception:
             print("Error: exception occurred!")

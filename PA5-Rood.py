@@ -5,7 +5,6 @@
 
 # Updated April 2024 through testing and DevOps integrations
 
-from colorama import Fore, Style  # type: ignore
 from MainController import MainController
 
 if __name__ == "__main__":

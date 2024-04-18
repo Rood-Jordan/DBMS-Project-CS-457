@@ -1,8 +1,7 @@
-import os, sys
+import os
 import shutil
 import re
 from colorama import Fore, Style  # type: ignore
-import fileinput
 # from DBMS import DBMS
 
 class DBMS:
@@ -530,7 +529,7 @@ class DBMS:
             tblOneIndex, tblTwoIndex = 0, 0
             operator, operand1, operand2 = whereLst[2], whereLst[1].split(".")[1], whereLst[3].replace(';', '').replace('\r', '').split(".")[1]
 
-            # print("HERE - ", attributeFields)
+            print(attributeFields)
 
             # find indicies (from both tables) to check in nested for loop for joining
             for index, attr in enumerate(tblData1[0].split("|")):

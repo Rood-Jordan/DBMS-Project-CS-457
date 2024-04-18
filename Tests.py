@@ -1,8 +1,8 @@
-import unittest
-unittest.TestLoader.sortTestMethodsUsing = None
-import os, sys
-import shutil
 from DBMS import DBMS
+import unittest
+import os
+
+unittest.TestLoader.sortTestMethodsUsing = None
 
 class TestDbmsSimulator(unittest.TestCase):
 
@@ -21,7 +21,7 @@ class TestDbmsSimulator(unittest.TestCase):
         self.assertFalse(self.dbms.createDatabase('SetupDB', self.CWD))
 
     def testDropDatabase_Successful(self):
-        result = self.dbms.createDatabase('db1', self.CWD)
+        self.dbms.createDatabase('db1', self.CWD)
         self.assertTrue(self.dbms.dropDatabase('db1', self.CWD))
 
     def testDropDatabase_Unsuccessful(self):
@@ -165,7 +165,7 @@ class TestDbmsSimulator(unittest.TestCase):
         self.assertEqual(99.99, self.dbms.max(os.path.join(self.CWD, "TestDB"), "TableTest2", 'price'))
 
     def testProcessUncommittedHandler_LockFileDoesExist(self):
-        fp = open("ProcessTable_lock", "x").close()
+        open("ProcessTable_lock", "x").close()
     
         self.assertTrue(self.dbms.processUncommittedHandler(self.CWD))
         # os.remove(os.path.join(self.CWD, "ProcessTable_lock"))
@@ -196,8 +196,6 @@ class TestDbmsSimulator(unittest.TestCase):
         self.assertFalse(self.dbms.leftOuterJoin(input, onStmt, os.path.join(self.CWD, "TestDB")))
 
     def testLeftOuterJoin_SuccessfullyExecuted(self):
-        input = ['insert', 'into', 'TableTest2', 'values(1,', "'testName',", '14.99);']
-
 
         # create another table for left outer joining
         self.dbms.createTable(['CREATE', 'TABLE', 'Employees', '(id', 'int,', 'name', 'string);'], self.CWD, "TestDB")
