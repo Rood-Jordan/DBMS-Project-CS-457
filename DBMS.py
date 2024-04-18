@@ -1,8 +1,7 @@
 import os
 import shutil
 import re
-from colorama import Fore, Style  # type: ignore
-# from DBMS import DBMS
+# from colorama import Fore, Style  # type: ignore
 
 class DBMS:
 
@@ -12,7 +11,9 @@ class DBMS:
         newDBPath = os.path.join(cwd, dbName)
 
         if os.path.exists(newDBPath):
-            print(Fore.RED + "!Failed " + Style.RESET_ALL + "to create database " + dbName + " because it already exists.")
+            # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to create database " + dbName + " because it already exists.")
+            print("!Failed to create database " + dbName + " because it already exists.")
+
             return False
         else:
             os.mkdir(newDBPath)
@@ -26,7 +27,8 @@ class DBMS:
         dbPath = os.path.join(cwd, dbName)
 
         if not os.path.exists(dbPath):
-            print(Fore.RED + "!Failed " + Style.RESET_ALL + "to delete database " + dbName + " because it does not exist.")
+            # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to delete database " + dbName + " because it does not exist.")
+            print("!Failed to delete database " + dbName + " because it does not exist.")
             return False
         else:
             shutil.rmtree(dbPath, ignore_errors=True)
@@ -40,7 +42,8 @@ class DBMS:
         dbPath = os.path.join(cwd, dbToUse)
         
         if not os.path.exists(dbPath):
-            print(Fore.RED + "!Failed " + Style.RESET_ALL + "to use " + dbToUse + " because it does not exist.")
+            # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to use " + dbToUse + " because it does not exist.")
+            print("!Failed to use " + dbToUse + " because it does not exist.")
             return ''
         else:
             print("Using database " + dbToUse + ".")
@@ -58,7 +61,9 @@ class DBMS:
         tablePath = os.path.join(cwd, dbToUse, tblName)    
 
         if os.path.exists(tablePath):
-            print(Fore.RED + "!Failed " + Style.RESET_ALL + "to create table " + input[2] + " because it already exists.")
+            # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to create table " + input[2] + " because it already exists.")
+            print("!Failed to create table " + input[2] + " because it already exists.")
+
             return False
         else:
             if not len(input) >= 5:
@@ -108,7 +113,9 @@ class DBMS:
         tablePath = os.path.join(cwd, tableName)
 
         if not os.path.exists(tablePath):
-            print(Fore.RED + "!Failed " + Style.RESET_ALL + "to delete " + tableName + " because it does not exist.")
+            # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to delete " + tableName + " because it does not exist.")
+            print("!Failed to delete " + tableName + " because it does not exist.")
+
             return "Unsuccessful - Table does not exist."
         else:
             os.remove(tablePath)
@@ -126,7 +133,9 @@ class DBMS:
         print(tablePath)
 
         if not os.path.exists(tablePath):
-            print(Fore.RED + "!Failed " + Style.RESET_ALL + "to query table " + tableName + " because it does not exist.")
+            # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to query table " + tableName + " because it does not exist.")
+            print("!Failed to query table " + tableName + " because it does not exist.")
+
             return 'Select failed because table does not exist.'
         else:
             lockFile = tablePath + '_lock'
@@ -151,7 +160,9 @@ class DBMS:
         print(tablePath)
 
         if not os.path.exists(tablePath):
-            print(Fore.RED + "!Failed " + Style.RESET_ALL + "to alter table " + input[2] + " because it does not exist.")
+            # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to alter table " + input[2] + " because it does not exist.")
+            print("!Failed to alter table " + input[2] + " because it does not exist.")
+
             return "Table desired to alter does not exist."
         else:
             
@@ -188,7 +199,9 @@ class DBMS:
         tblPath = os.path.join(cwd, tblName)
 
         if not os.path.exists(tblPath):
-            print(Fore.RED + "!Failed " + Style.RESET_ALL + "to insert data because table" + tblName + "does not exist.")
+            # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to insert data because table" + tblName + "does not exist.")
+            print("!Failed to insert data because table" + tblName + "does not exist.")
+
             return False
         else:
             parsedData = []
@@ -307,7 +320,9 @@ class DBMS:
             return "Success!"
 
         else:
-            print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data due to invalid input.")
+            # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data due to invalid input.")
+            print("!Failed to modify table data due to invalid input.")
+
             return "Invalid input"
 
 
@@ -323,7 +338,9 @@ class DBMS:
         tblPath = os.path.join(cwd, tblName)
 
         if not os.path.exists(tblPath):
-            print(Fore.RED + "!Failed " + Style.RESET_ALL + "to delete data from table " + tblName.replace('\r', '') + " because table not found.")
+            # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to delete data from table " + tblName.replace('\r', '') + " because table not found.")
+            print("!Failed to delete data from table " + tblName.replace('\r', '') + " because table not found.")
+
             return False
         else:
             if len(whereStmt) == 4 and 'where' in whereStmt:
@@ -393,7 +410,9 @@ class DBMS:
         boundArg = whereStmt[1]
 
         if not os.path.exists(tblPath):
-            print(Fore.RED + "!Failed " + Style.RESET_ALL + "to query table " + tblName + " because it does not exist.")
+            # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to query table " + tblName + " because it does not exist.")
+            print("!Failed to query table " + tblName + " because it does not exist.")
+
             return False
         else:
             attributesToQuery = []
@@ -468,7 +487,9 @@ class DBMS:
             print(os.path.exists(os.path.join(cwd, tbl1)))
 
         if not os.path.exists(os.path.join(cwd, tbl1)) or not os.path.exists(os.path.join(cwd, tbl2)):
-            print(Fore.RED + "!Failed " + Style.RESET_ALL + "to join tables because one or both do not exist.")
+            # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to join tables because one or both do not exist.")
+            print("!Failed to join tables because one or both do not exist.")
+
             return False
         else:
             operator, operand1, operand2 = whereList[2], whereList[1].split(".")[1], whereList[3].replace(';', '').replace('\r', '').split(".")[1]
@@ -516,7 +537,9 @@ class DBMS:
         tbl1, tbl2 = fromList[1], fromList[6]
 
         if not os.path.exists(os.path.join(cwd, tbl1)) or not os.path.exists(os.path.join(cwd, tbl2)):
-            print(Fore.RED + "!Failed " + Style.RESET_ALL + "to join tables because one or both do not exist.")
+            # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to join tables because one or both do not exist.")
+            print("!Failed to join tables because one or both do not exist.")
+
             return False
         else:
             file1 = open(os.path.join(cwd, tbl1))
@@ -617,7 +640,9 @@ class DBMS:
         tblPath = os.path.join(cwd, tblName)
 
         if not os.path.exists(tblPath):
-            print(Fore.RED + "!Failed " + Style.RESET_ALL + "to count records in " + tblName + " table because it does not exist.")
+            # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to count records in " + tblName + " table because it does not exist.")
+            print("!Failed to count records in " + tblName + " table because it does not exist.")
+
             return "Table does not exist so cannot count tuples."            
         else:
             with open(tblPath, 'r') as fp:
@@ -637,7 +662,9 @@ class DBMS:
         attributeToFind = attribute.replace('AVG(', '').replace(')', '').replace('\t', '').replace('\r', '')
 
         if not os.path.exists(tblPath):
-            print(Fore.RED + "!Failed " + Style.RESET_ALL + "to count records in " + tblName + " table because it does not exist.")
+            # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to count records in " + tblName + " table because it does not exist.")
+            print("!Failed to count records in " + tblName + " table because it does not exist.")
+
             return "Cannot find average because table does not exist."
         else:
             with open(tblPath, 'r') as fp:
@@ -670,7 +697,9 @@ class DBMS:
         attributeToFind = attribute.replace('MAX(', '').replace(')', '').replace('\t', '').replace('\r', '')
 
         if not os.path.exists(tblPath):
-            print(Fore.RED + "!Failed " + Style.RESET_ALL + "to count records in " + tblName + " table because it does not exist.")
+            # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to count records in " + tblName + " table because it does not exist.")
+            print("!Failed to count records in " + tblName + " table because it does not exist.")
+
             return "Table does not exist so cannot find MAX."
         else:
             maximum = 0
