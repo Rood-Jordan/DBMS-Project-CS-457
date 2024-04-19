@@ -7,7 +7,6 @@
 
 from MainController import MainController
 from SingleQueryController import SingleQueryController
-from DBMS import DBMS
 
 if __name__ == "__main__":
     m = MainController()
