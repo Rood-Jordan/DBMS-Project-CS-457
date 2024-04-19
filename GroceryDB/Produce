@@ -1,0 +1,3 @@
+id int|name string|price float
+1|lettuce|8.50
+2|kiwi|15.00

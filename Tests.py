@@ -1,4 +1,5 @@
 from DBMS import DBMS
+from SingleQueryController import SingleQueryController
 import unittest
 import os
 
@@ -11,6 +12,7 @@ class TestDbmsSimulator(unittest.TestCase):
         self.CWD = os.getcwd()
         self.dbms.createDatabase('TestDB', self.CWD)
         self.dbToUse = 'SetupDB'
+        self.controller = SingleQueryController()
 
 
     # unit tests
@@ -174,7 +176,6 @@ class TestDbmsSimulator(unittest.TestCase):
     # def testProcessUncommittedHandler_LockFileDoesNotExist(self):
     #     self.assertFalse(self.dbms.processUncommittedHandler(os.path.join(self.CWD, "TestDB")))
 
-
     def testQueryAndJoinTables_TablesDoNotExist(self):
         self.assertFalse(self.dbms.queryAndJoinTables(['select', '*','from', 'TableDNE', 'T', 'inner', 'join', 'Products', 'P'], ['on', 'T.id', '=', 'P.id'], os.path.join(self.CWD, "TestDB")))
 
@@ -212,20 +213,75 @@ class TestDbmsSimulator(unittest.TestCase):
 
 
     # integrations tests
-    def testDbAndTblCreationThroughMainControllerIntegration(self):
-        pass
 
-    def testDbAndTblRemovalThroughMain(self):
-        pass
+    def testDbAndTblCreationThroughControllerIntegration(self):
+        # going through controller to determine dbms function to move on to
 
-    def testInsertionAndAlteringDataThroughMain(self):
-        pass
+        self.assertTrue(self.controller.main('CREATE DATABASE BusinessDB;'))
+        self.assertEqual("BusinessDB", self.controller.main('USE BusinessDB;'))
+        
+        # self.assertIsNone(self.controller.main('CREATE TABLE Employees (id int, name string);'))
 
-    def testSelectsThroughMain(self):
-        pass
+        self.assertTrue(self.controller.main('CREATE TABLE Employees (id int, name string);', 'BusinessDB'))
+        self.assertTrue(self.controller.main('CREATE TABLE Products (id int, name string, price float);', 'BusinessDB'))
+        
+    def testDbAndTblRemovalThroughController(self):
+        self.assertFalse(self.controller.main('CREATE DATABASE BusinessDB;'))
 
-    def testAggregateFunctionsThroughMain(self):
-        pass
+        self.assertFalse(self.controller.main('CREATE TABLE Products (id int, name string, price float);', 'BusinessDB'))
+
+        self.assertEqual("Success.", self.controller.main('DROP TABLE Products;', 'BusinessDB'))
+        # self.assertIsNone(self.controller.main('DROP TABLE Products;'))
+
+        self.assertTrue(self.controller.main('DROP DATABASE BusinessDB;'))
+
+    def testInsertionAndAlteringDataThroughController(self):
+        # testing scalability and function combinations integrated with controller
+        self.assertTrue(self.controller.main('CREATE DATABASE StoreDB;'))
+        self.assertEqual("StoreDB", self.controller.main('USE StoreDB;'))
+
+        self.assertTrue(self.controller.main('CREATE TABLE Clothes (id int, name string, size string);', 'StoreDB'))
+        self.assertTrue(self.controller.main('CREATE TABLE Produce (id int, name string, price float);', 'StoreDB'))
+
+        self.assertEqual("Table modified successfully.", self.controller.main('ALTER TABLE Clothes ADD color string;', "StoreDB"))
+
+        # self.assertIsNone(self.controller.main('INSERT INTO Clothes values(1, shirt, small);'))
+
+        self.assertTrue(self.controller.main('INSERT INTO Clothes values(1, shirt, small);', 'StoreDB'))
+        self.assertTrue(self.controller.main('INSERT INTO Clothes values(2, pasnts, oneSize);', 'StoreDB'))
+        self.assertTrue(self.controller.main('INSERT INTO Clothes values(3, scarf, medium);', 'StoreDB'))
+        self.assertTrue(self.controller.main('INSERT INTO Clothes values(4, hat, large);', 'StoreDB'))
+
+
+    def testSelectsThroughController(self):
+        self.controller.main('CREATE DATABASE StoreDB;')
+        self.controller.main('CREATE TABLE Produce (id int, name string, price float);', 'StoreDB')
+        self.controller.main('INSERT INTO Produce values(1, lettuce, 8.50);', 'StoreDB')
+
+        # test invalid input followed by selects
+        self.assertEqual("Invalid input.", self.controller.main("Random invalid input"))
+
+        # self.assertIsNone(self.controller.main('SELECT * FROM Produce'))
+        self.assertTrue(self.controller.main('SELECT * FROM Produce', "StoreDB"))
+
+        self.assertTrue(self.controller.main('SELECT name, price from Produce where id = 1;'), "StoreDB")
+
+
+    def testAggregateFunctionsThroughController(self):
+        self.controller.main('CREATE DATABASE GroceryDB;')
+        self.controller.main('CREATE TABLE Produce (id int, name string, price float);', 'GroceryDB')
+        
+        self.controller.main('INSERT INTO Produce values(1, lettuce, 8.50);', 'GroceryDB')
+        self.controller.main('INSERT INTO Produce values(2, kiwi, 15.00);', 'GroceryDB')
+        
+    #     # self.assertIsNone(self.controller.main('SELECT COUNT(*) FROM Clothes;'))
+        self.assertEqual("Table does not exist so cannot count tuples.", self.controller.main('SELECT COUNT(*) FROM Clothes;', "fakeDB"))
+        
+    #     # self.assertIsNone(self.controller.main('SELECT AVG(price) FROM Produce;'))
+        self.assertEqual(1.5, self.controller.main('SELECT AVG(Price) FROM Produce;', 'GroceryDB'))
+
+    #     # self.assertIsNone(self.controller.main('SELECT MAX(price) FROM Produce;'))
+        self.assertEqual(15.00, self.controller.main('SELECT MAX(price) FROM Produce;', "GroceryDB"))
 
 
 # Note - run 'python -m coverage run -m unittest Tests.py' and then 'python -m coverage report' to get code coverage of tests

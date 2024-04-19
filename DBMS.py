@@ -125,7 +125,7 @@ class DBMS:
 
     def selectTable(self, tableName: str, cwd: str, thisProcessLocked: bool):
         # uses fileIO to read attribute fields from designated table file and output 
-        # also has lock file checks to determins if process has lock and which file has the
+        # also has lock file checks to determine if process has lock and which file has the
         # current data.
 
         contents = [str]
@@ -175,7 +175,7 @@ class DBMS:
                     attributeStr += '|'
 
             if input[3] == 'ADD':
-                print(attributeStr)
+                # print(attributeStr)
                 with open(tablePath, 'r+') as fp:
                     first_line = fp.readline().rstrip('\n')
                     fp.seek(0)
@@ -221,7 +221,7 @@ class DBMS:
             for i in range(start, len(flatParsedData)):
                 dataStr += flatParsedData[i].replace('values(', '').replace('VALUES', '').replace(',', '|').replace(');', '').replace('\t', '').replace('\'', '').replace('(', '')
 
-            print(dataStr)
+            # print(dataStr)
             with open(tblPath, 'a+') as fp:
                 dataInFile = fp.read()
 
@@ -408,7 +408,7 @@ class DBMS:
         tblPath = os.path.join(cwd, tblName)
         operator, operand = whereStmt[2], whereStmt[3].replace(';', '').replace('\r', '')
         boundArg = whereStmt[1]
-        print("HERE is TABLE PATH ", tblPath)
+        # print("HERE is TABLE PATH ", tblPath)
 
         if not os.path.exists(tblPath):
             # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to query table " + tblName + " because it does not exist.")
@@ -639,6 +639,7 @@ class DBMS:
     def countTuples(self, cwd: str, tblName: str, attribute: str):
         
         tblPath = os.path.join(cwd, tblName)
+        print("HERE with table path ", tblPath)
 
         if not os.path.exists(tblPath):
             # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to count records in " + tblName + " table because it does not exist.")
@@ -661,6 +662,7 @@ class DBMS:
 
         tblPath = os.path.join(cwd, tblName)
         attributeToFind = attribute.replace('AVG(', '').replace(')', '').replace('\t', '').replace('\r', '')
+        print("HERE IN AVERAGE")
 
         if not os.path.exists(tblPath):
             # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to count records in " + tblName + " table because it does not exist.")
@@ -701,7 +703,7 @@ class DBMS:
             # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to count records in " + tblName + " table because it does not exist.")
             print("!Failed to count records in " + tblName + " table because it does not exist.")
 
-            return "Table does not exist so cannot find MAX."
+            return  "Table does not exist so cannot find MAX."
         else:
             maximum = 0
 

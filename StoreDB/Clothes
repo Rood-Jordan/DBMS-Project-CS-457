@@ -1,0 +1,5 @@
+id int|name string|size string|color string
+1|shirt|small
+2|pasnts|oneSize
+3|scarf|medium
+4|hat|large
