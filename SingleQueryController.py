@@ -1,5 +1,4 @@
 import os
-from colorama import Fore, Style  # type: ignore
 from DBMS import DBMS
 
 class SingleQueryController:
@@ -30,47 +29,60 @@ class SingleQueryController:
 
             elif upperInput.startswith('CREATE TABLE') and len(listInput) >= 5:
                 if dbToUse == '':
-                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to create table " + listInput[2].replace('\r', '') + " because no database is being used.")
+                    # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to create table " + listInput[2].replace('\r', '') + " because no database is being used.")
+                    print("!Failed to create table " + listInput[2].replace('\r', '') + " because no database is being used.")
+
                 else:
                     result = dbms.createTable(listInput, cwd, dbToUse)
 
             elif upperInput.startswith('DROP TABLE') and len(listInput) == 3:
                 if dbToUse == '':
-                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to drop table " + listInput[2].replace('\r', '') + " because no database is being used.")
+                    # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to drop table " + listInput[2].replace('\r', '') + " because no database is being used.")
+                    print("!Failed to drop table " + listInput[2].replace('\r', '') + " because no database is being used.")
+
                 else:
                     result = dbms.dropTable(listInput[2].replace(';', '').replace('\r', ''), os.path.join(cwd, dbToUse))
 
             elif upperInput.startswith('SELECT * FROM') and len(listInput) == 4:
                 if dbToUse == '':
-                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to query table " + listInput[3].replace(';', '').replace('\r', '') + " because no database is being used.")
+                    # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to query table " + listInput[3].replace(';', '').replace('\r', '') + " because no database is being used.")
+                    print("!Failed to query table " + listInput[3].replace(';', '').replace('\r', '') + " because no database is being used.")
+
                 else:
                     result = dbms.selectTable(listInput[3].replace (';', '').replace('\r', ''), os.path.join(cwd, dbToUse), processLocked)
 
             elif upperInput.startswith('ALTER TABLE') and 'ADD' in upperInput and len(listInput) == 6:
                 if dbToUse == '':
-                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to alter table " + listInput[2].replace('\r', '') + " because no database is being used.")
+                    # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to alter table " + listInput[2].replace('\r', '') + " because no database is being used.")
+                    print("!Failed to alter table " + listInput[2].replace('\r', '') + " because no database is being used.")
+
                 else:
                    result = dbms.alterTable(listInput, os.path.join(cwd, dbToUse.replace(';', '').replace('\r', '')))
 
             elif upperInput.startswith('INSERT INTO') and 'VALUES' in upperInput and len(listInput) >= 4:
                 if dbToUse == '':
                     result = None
-                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to alter table " + listInput[2].replace('\r', '') + " because no database is being used.")
+                    # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to alter table " + listInput[2].replace('\r', '') + " because no database is being used.")
+                    print("!Failed to alter table " + listInput[2].replace('\r', '') + " because no database is being used.")
+
                 else:
                     result = dbms.insertData(listInput, os.path.join(cwd, dbToUse.replace('\r', '')))
 
             elif 'SELECT' in listInput and 'COUNT(*)' in listInput:
                 if dbToUse == '':
                     result = None
-                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to count records because no database is in use.")
+                    # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to count records because no database is in use.")
+                    print("!Failed to count records because no database is in use.")
+
                 else:
                     result = dbms.countTuples(os.path.join(cwd, dbToUse), listInput[3].replace(';', '').replace('\r', ''), listInput[1])
 
             elif 'SELECT' in listInput and 'AVG' in upperInput:
                 if dbToUse == '':
-                    print("HERE")
                     result = None
-                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to find average of attribute because no database is in use.")
+                    # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to find average of attribute because no database is in use.")
+                    print("!Failed to find average of attribute because no database is in use.")
+
                 else:
                     print("JEREERLEKJRLE")
                     result = dbms.average(os.path.join(cwd, dbToUse), listInput[3].replace(';', '').replace('\r', ''), listInput[1])
@@ -78,13 +90,17 @@ class SingleQueryController:
             elif 'SELECT' in listInput and 'MAX' in upperInput:
                 if dbToUse == '':   
                     result = None
-                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to find max of attribute because no database is in use.")
+                    # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to find max of attribute because no database is in use.")
+                    print("!Failed to find max of attribute because no database is in use.")
+
                 else:
                     result = dbms.max(os.path.join(cwd, dbToUse), listInput[3].replace(';', '').replace('\r', ''), listInput[1])
 
             elif upperInput.startswith('UPDATE') and (len(listInput) >= 2 and len(listInput) < 4 or len(listInput) == 10):
                 if dbToUse == '':
-                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data in " + listInput[1] + " because no database is being used.")
+                    # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data in " + listInput[1] + " because no database is being used.")
+                    print("!Failed to modify table data in " + listInput[1] + " because no database is being used.")
+
                 elif len(listInput) == 10 and upperInput.endswith(';'):
                     result = dbms.updateData(listInput[1], listInput[2:], os.path.join(cwd, dbToUse), processLocked)
                 else:   
@@ -101,11 +117,14 @@ class SingleQueryController:
                     if len(updateLineInfo.split(" ")) >= 9 and len(updateLineInfo.split(" ")) < 11:
                         result = dbms.updateData(listInput[1], updateLineInfo.split(" "), os.path.join(cwd, dbToUse), processLocked)
                     else:
-                        print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data due to invalid number of commands.")
+                        # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data due to invalid number of commands.")
+                        print("!Failed to modify table data due to invalid number of commands.")
 
             elif upperInput.startswith('DELETE FROM') and len(listInput) >= 7:
                 if dbToUse == '':
-                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data in " + listInput[2].capitalize() + " because no database is being used.")
+                    # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data in " + listInput[2].capitalize() + " because no database is being used.")
+                    print("!Failed to modify table data in " + listInput[2].capitalize() + " because no database is being used.")
+
                 else:
                     
                     result = dbms.removeData(listInput[2].capitalize(), listInput[3:], os.path.join(cwd, dbToUse))
@@ -113,7 +132,9 @@ class SingleQueryController:
             elif upperInput.startswith('SELECT') and len(listInput) >= 3:
                 if dbToUse == '':
                     result = True
-                    print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data in " + listInput[2].capitalize() + " because no database is being used.")
+                    # print(Fore.RED + "!Failed " + Style.RESET_ALL + "to modify table data in " + listInput[2].capitalize() + " because no database is being used.")
+                    print("!Failed to modify table data in " + listInput[2].capitalize() + " because no database is being used.")
+
                 else: 
                     lineInfo, whereStr, counter = userInput, '', 0
                     while True or counter <= 3:
