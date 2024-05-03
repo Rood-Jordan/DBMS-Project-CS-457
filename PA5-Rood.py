@@ -16,9 +16,11 @@ if __name__ == "__main__":
     print("This DBMS has two modes.\nThere is the Single Query Controller mode which allows for one query.\nOr the Main Controller which lets you put in as many query's as you want until keyboard interrupt or \'exit\' is input.\n\n")
 
     controller = input("Do you want to use the Single Query Controller (press 1) or the Main Controller (press 2)? ")
-    if input == 1:
-        s.main()
-    elif input == 2:
+    print(controller)
+    if controller == '1':
+        userInput = input()
+        s.main(userInput)
+    elif controller == '2':
         m.main()
     else:
         print("Invalid input.  Please try again.")
