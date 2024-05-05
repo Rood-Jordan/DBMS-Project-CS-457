@@ -23,4 +23,4 @@ if __name__ == "__main__":
     elif controller == '2':
         m.main()
     else:
-        print("Invalid input.  Please try again.\n")
+        print("Invalid input.  Please try again.")
