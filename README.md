@@ -2,6 +2,13 @@
 
 ## Student Name: Jordan Rood
 ---
+## Updates Made for CS 333 Testing and DevOps
+
+* Unit and Integration Tests added
+* Github Actions workflow added for automated testing, building, dockerizing and deployment through pushing built image
+to DockerHub
+* "One click deployment" implemented
+---
 ## Description:
 This program allows a database user to manage metadata/create database and tables within.
 Metadata meaning the database's high-level info (db's name, creation date/time, etc.)
